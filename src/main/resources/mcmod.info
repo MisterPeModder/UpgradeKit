@@ -1,0 +1,15 @@
+[
+  {
+    "modid": "upgradekit",
+    "name": "Upgrade Kit",
+    "description": "Upgrade GTCE machines without breaking them",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "url": "https://www.github.com/MisterPeModder/UpgradeKit",
+    "updateUrl": "",
+    "authorList": [
+      "MisterPeModder"
+    ],
+    "dependencies": ["gregtech"]
+  }
+]

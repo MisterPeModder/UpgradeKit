@@ -1,0 +1,81 @@
+buildscript {
+  repositories {
+    jcenter()
+    maven { url = 'https://files.minecraftforge.net/maven' }
+  }
+  dependencies {
+    classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
+  }
+}
+apply plugin: 'net.minecraftforge.gradle.forge'
+
+sourceCompatibility = targetCompatibility = '1.8'
+compileJava {
+  sourceCompatibility = targetCompatibility = '1.8'
+}
+
+def ENV = System.getenv()
+
+version = projectBaseVersion + '+' + (ENV.BUILD_NUMBER ? "build.${ENV.BUILD_NUMBER}" : 'local') + '-' + mcVersion
+group = projectGroup
+archivesBaseName = projectArchiveBaseName
+
+def mcFullVersion = "$mcVersion-$forgeVersion"
+def mcShortVersion = mcVersion.substring(0, mcVersion.lastIndexOf('.'))
+
+minecraft {
+  version = mcFullVersion
+  runDir = "run"
+  mappings = voldemappings
+
+  // Replace the version string in source
+  replace '@VERSION@', project.version
+}
+
+repositories {
+  maven { // JEI
+    name = 'Progwml6 maven'
+    setUrl('http://dvs1.progwml6.com/files/maven/')
+  }
+  maven { // JEI fallback
+    name = 'ModMaven'
+    url 'modmaven.k-4u.nl'
+  }
+  maven { // CodeChickenLib
+    name = 'ChickenBones maven'
+    url 'http://chickenbones.net/maven/'
+  }
+  maven { // The One Probe
+    name 'tterrag maven'
+    url "https://maven.tterrag.com/"
+  }
+  maven { // GTCE
+    name = 'Curseforge'
+    url 'https://minecraft.curseforge.com/api/maven'
+  }
+}
+
+dependencies {
+  deobfCompile "gregtechce:gregtech:$mcVersion:$gtceVersion"
+  deobfCompile "mezz.jei:jei_$mcVersion:$jeiVersion"
+  deobfCompile "codechicken:CodeChickenLib:$mcVersion-$cclVersion:deobf"
+  deobfCompile "mcjty.theoneprobe:TheOneProbe-$mcShortVersion:$mcShortVersion-$topVersion"
+}
+
+processResources {
+  // Rerun this step every time these change
+  inputs.property "version", project.version
+  inputs.property "mcversion", project.minecraft.version
+
+  // Inject version and Minecraft version to mod info
+  from(sourceSets.main.resources.srcDirs) {
+    include 'mcmod.info'
+
+    expand 'version': project.version, 'mcversion': project.minecraft.version
+  }
+
+  // Include everything else as is
+  from(sourceSets.main.resources.srcDirs) {
+    exclude 'mcmod.info'
+  }
+}
