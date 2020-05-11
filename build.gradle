@@ -7,7 +7,14 @@ buildscript {
     classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
   }
 }
+
+plugins {
+  id 'com.matthewprenger.cursegradle' version "1.4.0"
+  id 'maven-publish'
+}
+
 apply plugin: 'net.minecraftforge.gradle.forge'
+apply plugin: 'maven-publish'
 
 sourceCompatibility = targetCompatibility = '1.8'
 compileJava {
@@ -16,7 +23,7 @@ compileJava {
 
 def ENV = System.getenv()
 
-version = projectBaseVersion + '+' + (ENV.BUILD_NUMBER ? "build.${ENV.BUILD_NUMBER}" : 'local') + '-' + mcVersion
+version = projectBaseVersion + '+' + mcVersion
 group = projectGroup
 archivesBaseName = projectArchiveBaseName
 
@@ -85,4 +92,77 @@ processResources {
   from(sourceSets.main.resources.srcDirs) {
     exclude 'mcmod.info'
   }
+}
+
+String parseChangelog(String path) {
+	def file = new File(path)
+
+	if (!file.exists())
+		return '(no changelog)'
+	def changelog = ""
+  def end = false
+
+	file.eachLine {
+		if (end || it == null)
+			return
+		if (!it.startsWith('==='))
+			changelog += "$it\n"
+    else
+      end = true
+	}
+	return changelog
+}
+
+tasks.curseforge.enabled = ENV.CURSE_API_KEY && project.hasProperty('curseProjectId') && project.hasProperty('curseGameVersion')
+
+curseforge {
+  if (ENV.CURSE_API_KEY)
+    apiKey = ENV.CURSE_API_KEY
+
+  project {
+    id = curseProjectId
+    changelog = parseChangelog('changelog.txt')
+    releaseType = 'beta'
+    addGameVersion curseGameVersion
+    addGameVersion 'Forge'
+    addGameVersion 'Java 8'
+    mainArtifact(jar) {
+    	displayName = "[$mcVersion] $projectName-${project.version}"
+    }
+    relations {
+    	requiredDependency 'gregtechce'
+    }
+	}
+}
+
+publishing {
+  tasks.publish.dependsOn 'build'
+	publications {
+		mavenJava(MavenPublication) {
+			groupId = project.group
+			artifactId = project.archivesBaseName
+			version = project.version
+
+			artifact sourceJar
+		}
+	}
+
+	repositories {
+		if (ENV.MAVEN_USER && ENV.MAVEN_PASS) {
+			maven {
+				if (!ENV.MAVEN_REPO) {
+					println('env variable $MAVEN_REPO is not defined!');
+					url ""
+        } else {
+					url ENV.MAVEN_REPO
+        }
+				credentials {
+					username = ENV.MAVEN_USER
+					password = ENV.MAVEN_PASS
+				}
+			}
+		} else {
+			println("properties mavenUser and/or mavenPass are not defined!")
+		}
+	}
 }

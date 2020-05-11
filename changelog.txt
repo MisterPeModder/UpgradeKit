@@ -1,0 +1,8 @@
+0.1.0+1.12.2:
+- Test release for the CI infrastructure
+- Mod is not functional (yet)!
+
+====================================================================================================
+0.0.0+1.12.2-alpha:
+- These lines should not appear in the changelog!
+- nope!
