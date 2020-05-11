@@ -53,6 +53,10 @@ repositories {
     name = 'Curseforge'
     url 'https://minecraft.curseforge.com/api/maven'
   }
+  maven { // Forestry
+    name 'ic2 maven'
+    url 'http://maven.ic2.player.to/'
+  }
 }
 
 dependencies {
@@ -60,6 +64,9 @@ dependencies {
   deobfCompile "mezz.jei:jei_$mcVersion:$jeiVersion"
   deobfCompile "codechicken:CodeChickenLib:$mcVersion-$cclVersion:deobf"
   deobfCompile "mcjty.theoneprobe:TheOneProbe-$mcShortVersion:$mcShortVersion-$topVersion"
+  deobfCompile ("net.sengir.forestry:forestry_$mcVersion:$forestryVersion") {
+    transitive = false
+  }
 }
 
 processResources {
