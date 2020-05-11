@@ -15,6 +15,7 @@ out
 
 # vscode
 .vscodef
+.vscode/*
 
 # gradle
 build
