@@ -23,7 +23,7 @@ compileJava {
 
 def ENV = System.getenv()
 
-version = projectBaseVersion + '+' + mcVersion
+version = projectBaseVersion + '+' + mcVersion + '-' + (ENV.BUILD_NUMBER ? ("build." + ENV.BUILD_NUMBER) : "local")
 group = projectGroup
 archivesBaseName = projectArchiveBaseName
 
