@@ -113,6 +113,16 @@ String parseChangelog(String path) {
 	return changelog
 }
 
+String getReleaseType() {
+  if (projectBaseVersion.contains('alpha'))
+    return 'alpha'
+  else if (projectBaseVersion.contains('beta'))
+    return 'beta'
+  return 'release'
+}
+
+def curseReleaseType = getReleaseType()
+
 tasks.curseforge.enabled = ENV.CURSE_API_KEY && project.hasProperty('curseProjectId') && project.hasProperty('curseGameVersion')
 
 curseforge {
@@ -122,7 +132,7 @@ curseforge {
   project {
     id = curseProjectId
     changelog = parseChangelog('changelog.txt')
-    releaseType = 'beta'
+    releaseType = curseReleaseType
     addGameVersion curseGameVersion
     addGameVersion 'Forge'
     addGameVersion 'Java 8'
