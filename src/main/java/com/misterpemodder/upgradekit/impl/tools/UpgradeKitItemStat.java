@@ -14,6 +14,7 @@ import gregtech.api.metatileentity.MetaTileEntityHolder;
 import gregtech.api.metatileentity.TieredMetaTileEntity;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
@@ -21,6 +22,7 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
@@ -57,6 +59,7 @@ public class UpgradeKitItemStat implements IItemBehaviour {
         msg(player, "not a TileEntity");
         return;
       }
+      msg(player, "TE data: " + te.writeToNBT(new NBTTagCompound()).toString());
       if (!(te instanceof MetaTileEntityHolder)) {
         msg(player, "not a MetaTileEntity holder");
         return;
@@ -118,6 +121,18 @@ public class UpgradeKitItemStat implements IItemBehaviour {
           line = TextFormatting.DARK_RED + "Downgraded" + TextFormatting.RESET + " to ";
         else
           line = TextFormatting.YELLOW + "Replaced" + TextFormatting.RESET + " with ";
+
+        MetaTileEntityHolder mteHolder = mte.getHolder();
+        NBTTagCompound compound = mteHolder.writeToNBT(new NBTTagCompound());
+        IBlockState state = world.getBlockState(pos);
+
+        compound.setString("MetaId", upgradeMte.metaTileEntityId.toString());
+        mteHolder.readFromNBT(compound);
+        mteHolder.markDirty();
+        world.setBlockState(pos, state, 3);
+        world.notifyBlockUpdate(pos, state, state, 3);
+        world.notifyNeighborsOfStateChange(pos, state.getBlock(), true);
+        world.playSound(player, pos, SoundEvents.BLOCK_ANVIL_PLACE, SoundCategory.BLOCKS, 1.f, 1.f);
         if (!world.isRemote) {
           if (!player.capabilities.isCreativeMode) {
             upgradeStack.shrink(1);
