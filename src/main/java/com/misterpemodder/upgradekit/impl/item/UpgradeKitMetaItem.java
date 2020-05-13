@@ -1,5 +1,6 @@
 package com.misterpemodder.upgradekit.impl.item;
 
+import com.misterpemodder.upgradekit.impl.tools.UpgradeKitItemStat;
 import com.misterpemodder.upgradekit.impl.tools.UpgradeKitTool;
 
 import gregtech.api.items.toolitem.ToolMetaItem;
@@ -14,7 +15,7 @@ public class UpgradeKitMetaItem extends ToolMetaItem<ToolMetaItem<?>.MetaToolVal
   @Override
   public void registerSubItems() {
     UKMetaItems.UPGRADE_KIT = (ToolMetaItem<?>.MetaToolValueItem) this.addItem(0, "tool.upgrade_kit")
-        .setToolStats(new UpgradeKitTool()).addOreDict("upgradeKit");
+        .setToolStats(new UpgradeKitTool()).addOreDict("upgradeKit").addComponents(new UpgradeKitItemStat());
   }
 
   public void registerRecipes() {
