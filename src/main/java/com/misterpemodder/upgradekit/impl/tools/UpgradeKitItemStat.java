@@ -12,6 +12,7 @@ import gregtech.api.items.metaitem.stats.IItemBehaviour;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
 import gregtech.api.metatileentity.TieredMetaTileEntity;
+import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.SoundEvents;
@@ -122,9 +123,27 @@ public class UpgradeKitItemStat implements IItemBehaviour {
         else
           line = TextFormatting.YELLOW + "Replaced" + TextFormatting.RESET + " with ";
 
+        IBlockState state = world.getBlockState(pos);
+
+        if (!world.isRemote) {
+          if (!player.capabilities.isCreativeMode) {
+            upgradeStack.shrink(1);
+            if (upgradeStack.isEmpty())
+              player.inventory.deleteStack(upgradeStack);
+
+            ItemStack oldStack = mte.getStackForm();
+
+            if (!player.inventory.addItemStackToInventory(oldStack))
+              Block.spawnAsEntity(world, pos, mte.getStackForm());
+          }
+          player.sendStatusMessage(new TextComponentString(line)
+              .appendSibling(new TextComponentTranslation(upgradeMte.getMetaFullName())).appendSibling(
+                  new TextComponentString(String.format(" (%s tier)", GTValues.VN[upgradeMte.getTier()]))),
+              true);
+        }
+
         MetaTileEntityHolder mteHolder = mte.getHolder();
         NBTTagCompound compound = mteHolder.writeToNBT(new NBTTagCompound());
-        IBlockState state = world.getBlockState(pos);
 
         compound.setString("MetaId", upgradeMte.metaTileEntityId.toString());
         mteHolder.readFromNBT(compound);
@@ -133,17 +152,6 @@ public class UpgradeKitItemStat implements IItemBehaviour {
         world.notifyBlockUpdate(pos, state, state, 3);
         world.notifyNeighborsOfStateChange(pos, state.getBlock(), true);
         world.playSound(player, pos, SoundEvents.BLOCK_ANVIL_PLACE, SoundCategory.BLOCKS, 1.f, 1.f);
-        if (!world.isRemote) {
-          if (!player.capabilities.isCreativeMode) {
-            upgradeStack.shrink(1);
-            if (upgradeStack.isEmpty())
-              player.inventory.deleteStack(upgradeStack);
-          }
-          player.sendStatusMessage(new TextComponentString(line)
-              .appendSibling(new TextComponentTranslation(upgradeMte.getMetaFullName())).appendSibling(
-                  new TextComponentString(String.format(" (%s tier)", GTValues.VN[upgradeMte.getTier()]))),
-              true);
-        }
         return EnumActionResult.SUCCESS;
     }
   }
