@@ -1,4 +1,7 @@
-metaitem.tool.upgrade_kit.name=%s Upgrade Kit
+metaitem.tool.upgrade_tool.lv.name=%s Upgrade Tool (LV)
+metaitem.tool.upgrade_tool.mv.name=%s Upgrade Tool (MV)
+metaitem.tool.upgrade_tool.hv.name=%s Upgrade Tool (HV)
+item.material.oreprefix.toolCasingUpgradeTool=%s Upgrade Tool Casing
 upgradekit.mode.replace.name=Replace mode
 upgradekit.mode.upgrade_only.name=Upgrade Only Mode
 upgradekit.mode.downgrade_only.name=Downgrade Only Mode

@@ -12,7 +12,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import gregtech.api.GTValues;
 import gregtech.api.block.machines.BlockMachine;
 import gregtech.api.block.machines.MachineItemBlock;
-import gregtech.api.items.metaitem.MetaItem.MetaValueItem;
 import gregtech.api.items.metaitem.stats.IItemBehaviour;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
@@ -32,13 +31,7 @@ import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 
-public class UpgradeKitItemStat implements IItemBehaviour {
-  @Override
-  @SuppressWarnings("rawtypes")
-  public void onAddedToItem(MetaValueItem metaValueItem) {
-    UpgradeKit.logger.info("On added to item: " + metaValueItem.unlocalizedName);
-  }
-
+public class UpgradeToolBehavior implements IItemBehaviour {
   private static void msg(EntityPlayer player, String text) {
     player.sendMessage(new TextComponentString(text));
   }
