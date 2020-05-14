@@ -1,5 +1,6 @@
 package com.misterpemodder.upgradekit.impl;
 
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -70,9 +71,9 @@ public class UpgradeKit {
 
   private static Map<String, IReplacementBehavior<MetaTileEntity>> buildMteReplacementMap() {
     Map<String, IReplacementBehavior<MetaTileEntity>> map = new HashMap<>();
-    long startTime = System.currentTimeMillis();
+    long startTime = System.nanoTime();
 
-    logger.info("Building upgrade maps...");
+    logger.info("Building replacement maps...");
     for (MetaTileEntity mte : GregTechAPI.META_TILE_ENTITY_REGISTRY) {
       if (mte instanceof TieredMetaTileEntity) {
         String id = UpgradeKit.getMachineId(mte);
@@ -85,7 +86,10 @@ public class UpgradeKit {
         behavior.addReplacementCandidate(mte);
       }
     }
-    logger.info("Built upgrade maps in " + (System.currentTimeMillis() - startTime) + "ms");
+
+    double timeElapsedMillis = (double) (System.nanoTime() - startTime) / 1000000.0D;
+
+    logger.info("Built replacement maps in " + new DecimalFormat("#.##").format(timeElapsedMillis) + "ms");
     return map;
   }
 
