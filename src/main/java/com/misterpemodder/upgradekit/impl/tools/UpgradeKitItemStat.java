@@ -2,7 +2,12 @@ package com.misterpemodder.upgradekit.impl.tools;
 
 import java.util.Locale;
 
+import com.misterpemodder.upgradekit.impl.IReplacementConfig;
 import com.misterpemodder.upgradekit.impl.UpgradeKit;
+import com.misterpemodder.upgradekit.impl.behavior.IReplacementBehavior;
+import com.misterpemodder.upgradekit.impl.behavior.IReplacementBehavior.ReplacementType;
+
+import org.apache.commons.lang3.tuple.Pair;
 
 import gregtech.api.GTValues;
 import gregtech.api.block.machines.BlockMachine;
@@ -12,10 +17,8 @@ import gregtech.api.items.metaitem.stats.IItemBehaviour;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
 import gregtech.api.metatileentity.TieredMetaTileEntity;
-import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.SoundEvents;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
@@ -23,7 +26,6 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
-import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
@@ -90,70 +92,65 @@ public class UpgradeKitItemStat implements IItemBehaviour {
   public EnumActionResult onItemUseFirst(EntityPlayer player, World world, BlockPos pos, EnumFacing side, float hitX,
       float hitY, float hitZ, EnumHand hand) {
     ItemStack stack = player.getHeldItem(hand);
+    UpgradeConfig config = this.getConfig(stack);
 
     if (player.isSneaking()) {
       if (!world.isRemote) {
-        statusMsg(player, "Mode set to: " + cycleMode(stack));
+        cycleMode(config);
+        player.sendStatusMessage(new TextComponentTranslation(
+            config.debug ? "upgradekit.mode.debug.name" : config.mode.getUnlocalizedName()), true);
+        this.setConfig(stack, config);
       }
       return EnumActionResult.SUCCESS;
     }
-    Mode mode = getMode(stack);
 
-    switch (mode) {
-      case DEBUG:
-        this.logMetaTileEntity(player, world, pos, side);
-        return EnumActionResult.SUCCESS;
-      default:
-        MetaTileEntity mte = BlockMachine.getMetaTileEntity(world, pos);
-        ItemStack upgradeStack = findCandidate(player, mte, mode);
-
-        if (upgradeStack == ItemStack.EMPTY) {
-          if (!world.isRemote)
-            statusMsg(player, TextFormatting.RED + "No replacements found in inventory");
-          return EnumActionResult.SUCCESS;
-        }
-        TieredMetaTileEntity upgradeMte = (TieredMetaTileEntity) MachineItemBlock.getMetaTileEntity(upgradeStack);
-        int tierDiff = UpgradeKit.upgradeMap.getTierDifference(upgradeMte, mte);
-        String line;
-
-        if (tierDiff > 0)
-          line = TextFormatting.GREEN + "Upgraded" + TextFormatting.RESET + " to ";
-        else if (tierDiff < 0)
-          line = TextFormatting.DARK_RED + "Downgraded" + TextFormatting.RESET + " to ";
-        else
-          line = TextFormatting.YELLOW + "Replaced" + TextFormatting.RESET + " with ";
-
-        IBlockState state = world.getBlockState(pos);
-
-        if (!world.isRemote) {
-          if (!player.capabilities.isCreativeMode) {
-            upgradeStack.shrink(1);
-            if (upgradeStack.isEmpty())
-              player.inventory.deleteStack(upgradeStack);
-
-            ItemStack oldStack = mte.getStackForm();
-
-            if (!player.inventory.addItemStackToInventory(oldStack))
-              Block.spawnAsEntity(world, pos, mte.getStackForm());
-          }
-          player.sendStatusMessage(new TextComponentString(line)
-              .appendSibling(new TextComponentTranslation(upgradeMte.getMetaFullName())).appendSibling(
-                  new TextComponentString(String.format(" (%s tier)", GTValues.VN[upgradeMte.getTier()]))),
-              true);
-        }
-
-        MetaTileEntityHolder mteHolder = mte.getHolder();
-        NBTTagCompound compound = mteHolder.writeToNBT(new NBTTagCompound());
-
-        compound.setString("MetaId", upgradeMte.metaTileEntityId.toString());
-        mteHolder.readFromNBT(compound);
-        mteHolder.markDirty();
-        world.setBlockState(pos, state, 3);
-        world.notifyBlockUpdate(pos, state, state, 3);
-        world.notifyNeighborsOfStateChange(pos, state.getBlock(), true);
-        world.playSound(player, pos, SoundEvents.BLOCK_ANVIL_PLACE, SoundCategory.BLOCKS, 1.f, 1.f);
-        return EnumActionResult.SUCCESS;
+    if (config.debug) {
+      this.logMetaTileEntity(player, world, pos, side);
+      return EnumActionResult.SUCCESS;
     }
+
+    MetaTileEntity mte = BlockMachine.getMetaTileEntity(world, pos);
+    IReplacementBehavior<MetaTileEntity> behavior = UpgradeKit.getReplacementBehaviorForMte(mte);
+
+    if (behavior == null || !behavior.hasReplacements(mte)) {
+      if (!world.isRemote)
+        statusMsg(player, TextFormatting.RED + "Cannot be replaced");
+      return EnumActionResult.SUCCESS;
+    }
+
+    Pair<ItemStack, ReplacementType> candidate = findCandidate(player, mte, config, behavior);
+
+    if (candidate == null) {
+      if (!world.isRemote)
+        statusMsg(player, TextFormatting.RED + "No replacements found in inventory");
+      return EnumActionResult.SUCCESS;
+    }
+
+    ItemStack upgradeStack = candidate.getLeft();
+    ReplacementType type = candidate.getRight();
+    TieredMetaTileEntity upgradeMte = (TieredMetaTileEntity) MachineItemBlock.getMetaTileEntity(upgradeStack);
+    String line;
+
+    if (type == ReplacementType.UPGRADE)
+      line = TextFormatting.GREEN + "Upgraded" + TextFormatting.RESET + " to ";
+    else if (type == ReplacementType.DOWNGRADE)
+      line = TextFormatting.DARK_RED + "Downgraded" + TextFormatting.RESET + " to ";
+    else
+      line = TextFormatting.YELLOW + "Replaced" + TextFormatting.RESET + " with ";
+
+    behavior.replace(player, world, pos, side, mte, behavior.getReplacementFromStack(upgradeStack));
+    if (!world.isRemote) {
+      if (!player.capabilities.isCreativeMode) {
+        upgradeStack.shrink(1);
+        if (upgradeStack.isEmpty())
+          player.inventory.deleteStack(upgradeStack);
+      }
+      player.sendStatusMessage(
+          new TextComponentString(line).appendSibling(new TextComponentTranslation(upgradeMte.getMetaFullName()))
+              .appendSibling(new TextComponentString(String.format(" (%s tier)", GTValues.VN[upgradeMte.getTier()]))),
+          true);
+    }
+    return EnumActionResult.SUCCESS;
   }
 
   @Override
@@ -162,71 +159,104 @@ public class UpgradeKitItemStat implements IItemBehaviour {
     return ActionResult.newResult(EnumActionResult.PASS, player.getHeldItem(hand));
   }
 
-  private static ItemStack findCandidate(EntityPlayer player, MetaTileEntity mte, Mode mode) {
-    if (mte == null || !UpgradeKit.upgradeMap.hasUpgrades(mte))
-      return ItemStack.EMPTY;
-    ItemStack offhandStack;
-    ItemStack mainhandStack;
+  private static <T> Pair<ItemStack, ReplacementType> findCandidate(EntityPlayer player, T toReplace,
+      IReplacementConfig config, IReplacementBehavior<T> behavior) {
+    ItemStack stack = player.getHeldItem(EnumHand.OFF_HAND);
+    ReplacementType type = canReplace(toReplace, stack, behavior, config);
 
-    if (canReplace(mte, (offhandStack = player.getHeldItem(EnumHand.OFF_HAND)), mode)) {
-      return offhandStack;
-    } else if (canReplace(mte, (mainhandStack = player.getHeldItem(EnumHand.MAIN_HAND)), mode)) {
-      return mainhandStack;
-    } else {
-      for (int i = 0; i < player.inventory.getSizeInventory(); ++i) {
-        ItemStack itemstack = player.inventory.getStackInSlot(i);
+    if (type != ReplacementType.NONE)
+      return Pair.of(stack, type);
+    stack = player.getHeldItem(EnumHand.MAIN_HAND);
+    type = canReplace(toReplace, stack, behavior, config);
+    if (type != ReplacementType.NONE)
+      return Pair.of(stack, type);
 
-        if (canReplace(mte, itemstack, mode))
-          return itemstack;
+    for (int i = 0; i < player.inventory.getSizeInventory(); ++i) {
+      stack = player.inventory.getStackInSlot(i);
+      type = canReplace(toReplace, stack, behavior, config);
+      if (type != ReplacementType.NONE)
+        return Pair.of(stack, type);
+    }
+    return null;
+  }
+
+  private static <T> ReplacementType canReplace(T toReplace, ItemStack replacement, IReplacementBehavior<T> behavior,
+      IReplacementConfig config) {
+    ReplacementType type = behavior.getReplacementType(toReplace, behavior.getReplacementFromStack(replacement));
+
+    switch (config.getMode()) {
+      case UPGRADE_ONLY:
+        return type == ReplacementType.UPGRADE ? ReplacementType.UPGRADE : ReplacementType.NONE;
+      case DOWNGRADE_ONLY:
+        return type == ReplacementType.DOWNGRADE ? ReplacementType.DOWNGRADE : ReplacementType.NONE;
+      default:
+        return type;
+    }
+  }
+
+  protected UpgradeConfig getConfig(ItemStack stack) {
+    UpgradeConfig config = new UpgradeConfig();
+    NBTTagCompound compound = stack.getTagCompound();
+
+    if (compound != null) {
+      NBTTagCompound configCompound = compound.getCompoundTag("ReplacementConfig");
+
+      if (configCompound != null) {
+        config.debug = compound.getBoolean("Debug");
+        try {
+          config.mode = IReplacementConfig.Mode.valueOf(compound.getString("Mode").toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+        }
       }
-      return ItemStack.EMPTY;
     }
+    return config;
   }
 
-  private static boolean canReplace(MetaTileEntity mte, ItemStack stack, Mode mode) {
-    MetaTileEntity stackMte = MachineItemBlock.getMetaTileEntity(stack);
-
-    if (stackMte != null && UpgradeKit.upgradeMap.canReplace(mte, stackMte)) {
-      if (mode == Mode.REPLACE)
-        return true;
-      int tierDiff = UpgradeKit.upgradeMap.getTierDifference(stackMte, mte);
-
-      return !((mode == Mode.UPGRADE_ONLY && tierDiff <= 0) || (mode == Mode.DOWNGRADE_ONLY && tierDiff >= 0));
-    }
-    return false;
-  }
-
-  private static void setMode(ItemStack stack, Mode mode) {
+  protected void setConfig(ItemStack stack, UpgradeConfig config) {
     NBTTagCompound compound = stack.getTagCompound();
 
     if (compound == null) {
       compound = new NBTTagCompound();
       stack.setTagCompound(compound);
     }
-    compound.setString("Mode", mode.name().toLowerCase(Locale.ROOT));
+    compound.setBoolean("Debug", config.debug);
+    compound.setString("Mode", config.mode.name().toLowerCase(Locale.ROOT));
   }
 
-  private static Mode getMode(ItemStack stack) {
-    NBTTagCompound compound = stack.getTagCompound();
+  private static void cycleMode(UpgradeConfig config) {
+    int next = config.mode.ordinal() + 1;
 
-    if (compound != null) {
-      try {
-        return Mode.valueOf(compound.getString("Mode").toUpperCase(Locale.ROOT));
-      } catch (IllegalArgumentException e) {
-      }
+    if (next >= IReplacementConfig.Mode.values().length) {
+      if (config.debug)
+        config.mode = IReplacementConfig.Mode.REPLACE;
+      config.debug = !config.debug;
+    } else {
+      config.mode = IReplacementConfig.Mode.values()[next];
     }
-    return Mode.REPLACE;
   }
 
-  private static Mode cycleMode(ItemStack stack) {
-    int ordinal = getMode(stack).ordinal();
-    Mode newMode = Mode.values()[ordinal + 1 >= Mode.values().length ? 0 : ordinal + 1];
+  protected static final class UpgradeConfig implements IReplacementConfig {
+    public boolean debug;
+    public IReplacementConfig.Mode mode;
 
-    setMode(stack, newMode);
-    return newMode;
-  }
+    public UpgradeConfig() {
+      this.debug = false;
+      this.mode = IReplacementConfig.Mode.REPLACE;
+    }
 
-  private static enum Mode {
-    REPLACE, UPGRADE_ONLY, DOWNGRADE_ONLY, DEBUG
+    public void readFromNBT(NBTTagCompound compound) {
+
+    }
+
+    public NBTTagCompound writeToNBT(NBTTagCompound compound) {
+      compound.setBoolean("Debug", this.debug);
+      compound.setString("Mode", mode.name().toLowerCase(Locale.ROOT));
+      return compound;
+    }
+
+    @Override
+    public Mode getMode() {
+      return this.mode;
+    }
   }
 }

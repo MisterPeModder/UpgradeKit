@@ -1,11 +1,20 @@
 package com.misterpemodder.upgradekit.impl;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.annotation.Nullable;
+
+import com.misterpemodder.upgradekit.impl.behavior.IReplacementBehavior;
+import com.misterpemodder.upgradekit.impl.behavior.TieredMetaTileEntityReplacementBehavior;
 import com.misterpemodder.upgradekit.impl.item.UKMetaItems;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import gregtech.api.GregTechAPI;
 import gregtech.api.metatileentity.MetaTileEntity;
+import gregtech.api.metatileentity.TieredMetaTileEntity;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
@@ -25,7 +34,7 @@ public class UpgradeKit {
 
   public static Logger logger = LogManager.getLogger(MODID);
 
-  public static IUpgradeMap<MetaTileEntity> upgradeMap;
+  private static Map<String, IReplacementBehavior<MetaTileEntity>> mteReplacementBehaviors;
 
   @EventHandler
   public void preInit(FMLPreInitializationEvent event) {
@@ -36,11 +45,28 @@ public class UpgradeKit {
 
   @EventHandler
   public void postInit(FMLPostInitializationEvent event) {
+    mteReplacementBehaviors = buildMteReplacementMap();
+  }
+
+  private static Map<String, IReplacementBehavior<MetaTileEntity>> buildMteReplacementMap() {
+    Map<String, IReplacementBehavior<MetaTileEntity>> map = new HashMap<>();
     long startTime = System.currentTimeMillis();
 
     logger.info("Building upgrade maps...");
-    upgradeMap = new MetaTileEntityUpgradeMap();
+    for (MetaTileEntity mte : GregTechAPI.META_TILE_ENTITY_REGISTRY) {
+      if (mte instanceof TieredMetaTileEntity) {
+        String id = UpgradeKit.getMachineId(mte);
+        IReplacementBehavior<MetaTileEntity> behavior = map.get(id);
+
+        if (behavior == null) {
+          behavior = new TieredMetaTileEntityReplacementBehavior(id);
+          map.put(id, behavior);
+        }
+        behavior.addReplacementCandidate(mte);
+      }
+    }
     logger.info("Built upgrade maps in " + (System.currentTimeMillis() - startTime) + "ms");
+    return map;
   }
 
   @SubscribeEvent(priority = EventPriority.LOW)
@@ -50,5 +76,10 @@ public class UpgradeKit {
 
   public static String getMachineId(MetaTileEntity mte) {
     return mte.metaTileEntityId.getResourcePath().split("\\.")[0];
+  }
+
+  @Nullable
+  public static IReplacementBehavior<MetaTileEntity> getReplacementBehaviorForMte(@Nullable MetaTileEntity mte) {
+    return mte == null ? null : mteReplacementBehaviors.get(getMachineId(mte));
   }
 }
