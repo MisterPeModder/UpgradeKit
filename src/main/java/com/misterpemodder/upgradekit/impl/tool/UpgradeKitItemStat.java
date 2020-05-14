@@ -1,4 +1,4 @@
-package com.misterpemodder.upgradekit.impl.tools;
+package com.misterpemodder.upgradekit.impl.tool;
 
 import java.util.Locale;
 

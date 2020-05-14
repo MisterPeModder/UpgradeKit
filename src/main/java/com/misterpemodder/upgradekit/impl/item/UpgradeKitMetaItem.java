@@ -1,7 +1,7 @@
 package com.misterpemodder.upgradekit.impl.item;
 
-import com.misterpemodder.upgradekit.impl.tools.UpgradeKitItemStat;
-import com.misterpemodder.upgradekit.impl.tools.UpgradeKitTool;
+import com.misterpemodder.upgradekit.impl.tool.UpgradeKitItemStat;
+import com.misterpemodder.upgradekit.impl.tool.UpgradeKitTool;
 
 import gregtech.api.items.toolitem.ToolMetaItem;
 import gregtech.api.recipes.ModHandler;

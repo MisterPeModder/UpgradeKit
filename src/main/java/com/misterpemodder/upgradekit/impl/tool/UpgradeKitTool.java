@@ -1,4 +1,4 @@
-package com.misterpemodder.upgradekit.impl.tools;
+package com.misterpemodder.upgradekit.impl.tool;
 
 import gregtech.common.tools.ToolBase;
 import net.minecraft.item.ItemStack;
