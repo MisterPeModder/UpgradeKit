@@ -1,5 +1,6 @@
 package com.misterpemodder.upgradekit.impl.item;
 
+import com.misterpemodder.upgradekit.impl.UpgradeKit;
 import com.misterpemodder.upgradekit.impl.item.UpgradeToolMetaItem.UpgradeToolMetaValueItem;
 import com.misterpemodder.upgradekit.impl.tool.UpgradeToolBehavior;
 import com.misterpemodder.upgradekit.impl.tool.UpgradeToolHV;
@@ -9,8 +10,10 @@ import com.misterpemodder.upgradekit.impl.tool.UpgradeToolMV;
 import gregtech.api.capability.GregtechCapabilities;
 import gregtech.api.capability.IElectricItem;
 import gregtech.api.items.metaitem.ElectricStats;
+import gregtech.api.items.metaitem.stats.IItemDurabilityManager;
 import gregtech.api.items.toolitem.ToolMetaItem;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.math.MathHelper;
 
 public class UpgradeToolMetaItem extends ToolMetaItem<UpgradeToolMetaValueItem> {
   @Override
@@ -33,9 +36,17 @@ public class UpgradeToolMetaItem extends ToolMetaItem<UpgradeToolMetaValueItem> 
 
   @Override
   protected int getModelIndex(ItemStack stack) {
-    IElectricItem electricItem = stack.getCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null);
+    return stack.getCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null).getCharge() <= 0 ? 0 : 1;
+  }
 
-    return electricItem == null || electricItem.getCharge() <= 0 ? 0 : 1;
+  @Override
+  public int getRGBDurabilityForDisplay(ItemStack stack) {
+    UpgradeToolMetaValueItem item = this.getItem(stack);
+    IItemDurabilityManager manager;
+
+    if (item != null && (manager = item.getDurabilityManager()) != null)
+      return manager.getRGBDurabilityForDisplay(stack);
+    return super.getRGBDurabilityForDisplay(stack);
   }
 
   public class UpgradeToolMetaValueItem extends ToolMetaItem<?>.MetaToolValueItem {
@@ -46,6 +57,40 @@ public class UpgradeToolMetaItem extends ToolMetaItem<UpgradeToolMetaValueItem> 
     @Override
     public int getModelAmount() {
       return 2;
+    }
+
+    @Override
+    public IItemDurabilityManager getDurabilityManager() {
+      return UpgradeToolDurabilityManager.INSTANCE;
+    }
+  }
+
+  public static class UpgradeToolDurabilityManager implements IItemDurabilityManager {
+    public static UpgradeToolDurabilityManager INSTANCE = new UpgradeToolDurabilityManager();
+
+    private UpgradeToolDurabilityManager() {
+    }
+
+    @Override
+    public double getDurabilityForDisplay(ItemStack stack) {
+      IElectricItem electricItem = stack.getCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null);
+
+      return 1.0 - (electricItem.getCharge() / (electricItem.getMaxCharge() * 1.0));
+    }
+
+    @Override
+    public int getRGBDurabilityForDisplay(ItemStack stack) {
+      float charge = 1.0F - (float) getDurabilityForDisplay(stack);
+      int color = MathHelper.hsvToRGB(Math.max(0.0F, 1.0F / (-5.0F * charge - 2.1F) + 0.47F), 1.0F, 1.0F);
+
+      if (charge < 0.11D)
+        return UpgradeKit.proxy.blinkRGBColor(color);
+      return color;
+    }
+
+    @Override
+    public boolean showsDurabilityBar(ItemStack stack) {
+      return true;
     }
   }
 }

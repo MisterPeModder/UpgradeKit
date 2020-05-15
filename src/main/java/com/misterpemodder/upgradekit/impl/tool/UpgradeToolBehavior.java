@@ -1,5 +1,6 @@
 package com.misterpemodder.upgradekit.impl.tool;
 
+import java.util.List;
 import java.util.Locale;
 
 import com.misterpemodder.upgradekit.impl.IReplacementConfig;
@@ -17,6 +18,7 @@ import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
 import gregtech.api.metatileentity.TieredMetaTileEntity;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -171,6 +173,17 @@ public class UpgradeToolBehavior implements IItemBehaviour {
         return Pair.of(stack, type);
     }
     return null;
+  }
+
+  @Override
+  public void addInformation(ItemStack stack, List<String> lines) {
+    IItemBehaviour.super.addInformation(stack, lines);
+    UpgradeConfig config = this.getConfig(stack);
+
+    if (config.debug)
+      lines.add(I18n.format("upgradekit.mode.debug.name"));
+    else
+      lines.add(I18n.format(this.getConfig(stack).getMode().getUnlocalizedName()));
   }
 
   private static <T> ReplacementType canReplace(T toReplace, ItemStack replacement, IReplacementBehavior<T> behavior,

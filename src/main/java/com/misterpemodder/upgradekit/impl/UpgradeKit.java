@@ -10,6 +10,7 @@ import javax.annotation.Nullable;
 import com.misterpemodder.upgradekit.impl.behavior.IReplacementBehavior;
 import com.misterpemodder.upgradekit.impl.behavior.TieredMetaTileEntityReplacementBehavior;
 import com.misterpemodder.upgradekit.impl.item.UKMetaItems;
+import com.misterpemodder.upgradekit.impl.proxy.CommonProxy;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,6 +28,7 @@ import net.minecraftforge.common.util.EnumHelper;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
+import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
@@ -45,6 +47,9 @@ public class UpgradeKit {
 
   public static MaterialIconType upgradeToolCasingMaterialIconType;
   public static OrePrefix upgradeToolCasingOrePrefix;
+
+  @SidedProxy(modId = MODID, clientSide = "com.misterpemodder.upgradekit.impl.proxy.ClientProxy", serverSide = "com.misterpemodder.upgradekit.impl.proxy.ServerProxy")
+  public static CommonProxy proxy;
 
   public UpgradeKit() {
     EnumHelper.addEnum(MaterialIconType.class, "toolCasingUpgradeTool", new Class[0]);
