@@ -1,0 +1,7 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "gregtech:items/tools/upgrade_tool_mv_lit",
+    "layer1": "gregtech:items/tools/upgrade_tool_frame"
+  }
+}
