@@ -19,13 +19,13 @@ public class UpgradeToolMetaItem extends ToolMetaItem<UpgradeToolMetaValueItem> 
   @Override
   public void registerSubItems() {
     UKMetaItems.UPGRADE_TOOL_LV = (UpgradeToolMetaValueItem) this.addItem(0, "tool.upgrade_tool.lv")
-        .setToolStats(new UpgradeToolLV()).setFullRepairCost(4).addComponents(new UpgradeToolBehavior())
+        .setToolStats(new UpgradeToolLV()).setFullRepairCost(4).addComponents(new UpgradeToolBehavior(25))
         .addComponents(ElectricStats.createElectricItem(100000L, 1L));
     UKMetaItems.UPGRADE_TOOL_MV = (UpgradeToolMetaValueItem) this.addItem(1, "tool.upgrade_tool.mv")
-        .setToolStats(new UpgradeToolMV()).setFullRepairCost(4).addComponents(new UpgradeToolBehavior())
+        .setToolStats(new UpgradeToolMV()).setFullRepairCost(4).addComponents(new UpgradeToolBehavior(15))
         .addComponents(ElectricStats.createElectricItem(400000L, 2L));
     UKMetaItems.UPGRADE_TOOL_HV = (UpgradeToolMetaValueItem) this.addItem(2, "tool.upgrade_tool.hv")
-        .setToolStats(new UpgradeToolHV()).setFullRepairCost(4).addComponents(new UpgradeToolBehavior())
+        .setToolStats(new UpgradeToolHV()).setFullRepairCost(4).addComponents(new UpgradeToolBehavior(10))
         .addComponents(ElectricStats.createElectricItem(1600000L, 3L));
   }
 

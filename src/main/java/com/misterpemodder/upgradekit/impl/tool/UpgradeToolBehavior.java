@@ -34,6 +34,12 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 
 public class UpgradeToolBehavior implements IItemBehaviour {
+  protected final int cooldown;
+
+  public UpgradeToolBehavior(int cooldown) {
+    this.cooldown = cooldown;
+  }
+
   private static void msg(EntityPlayer player, String text) {
     player.sendMessage(new TextComponentString(text));
   }
@@ -89,6 +95,8 @@ public class UpgradeToolBehavior implements IItemBehaviour {
     ItemStack stack = player.getHeldItem(hand);
     UpgradeConfig config = this.getConfig(stack);
 
+    if (player.getCooldownTracker().hasCooldown(stack.getItem()))
+      return EnumActionResult.SUCCESS;
     if (player.isSneaking()) {
       if (!world.isRemote) {
         cycleMode(config);
@@ -145,6 +153,7 @@ public class UpgradeToolBehavior implements IItemBehaviour {
               .appendSibling(new TextComponentString(String.format(" (%s tier)", GTValues.VN[upgradeMte.getTier()]))),
           true);
     }
+    player.getCooldownTracker().setCooldown(stack.getItem(), cooldown);
     return EnumActionResult.SUCCESS;
   }
 
