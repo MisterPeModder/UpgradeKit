@@ -16,9 +16,4 @@ public class MetaTileEntityReplacementTarget implements IReplacementTarget<MetaT
       float hitY, float hitZ, EnumHand hand) {
     return world != null ? BlockMachine.getMetaTileEntity(world, pos) : null;
   }
-
-  @Override
-  public Class<MetaTileEntity> getTargetClass() {
-    return MetaTileEntity.class;
-  }
 }

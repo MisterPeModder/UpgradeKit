@@ -29,11 +29,4 @@ public interface IReplacementTarget<T> {
   @Nullable
   T getTarget(EntityPlayer player, World world, BlockPos pos, EnumFacing side, float hitX, float hitY, float hitZ,
       EnumHand hand);
-
-  /**
-   * 
-   * @return
-   * @since 1.0.0
-   */
-  Class<T> getTargetClass();
 }
