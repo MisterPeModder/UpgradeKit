@@ -12,6 +12,7 @@ upgradekit.gui.category.safe_mode=Safe Mode
 upgradekit.error.no_replacements=No replacements found in inventory
 upgradekit.error.cannot_replace=Cannot be replaced
 upgradekit.error.cannot_edit=Cannot edit this block
+upgradekit.error.no_power=Not enough power
 upgradekit.replace.upgrade=§aUpgraded§r to %s
 upgradekit.replace.downgrade=§4Downgraded§r to %s
 upgradekit.replace.equivalent=§eReplaced§r with %s

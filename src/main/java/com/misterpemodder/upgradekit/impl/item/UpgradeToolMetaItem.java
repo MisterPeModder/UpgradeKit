@@ -15,10 +15,13 @@ import gregtech.api.items.metaitem.ElectricStats;
 import gregtech.api.items.metaitem.stats.IItemComponent;
 import gregtech.api.items.metaitem.stats.IItemDurabilityManager;
 import gregtech.api.items.toolitem.ToolMetaItem;
+import gregtech.common.ConfigHolder;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.MathHelper;
 
 public class UpgradeToolMetaItem extends ToolMetaItem<UpgradeToolMetaValueItem> {
+  public static final int DURABILITY_DAMAGE = 50;
+
   @Override
   public void registerSubItems() {
     UKMetaItems.UPGRADE_TOOL_LV = (UpgradeToolMetaValueItem) this.addItem(0, "tool.upgrade_tool.lv")
@@ -39,7 +42,8 @@ public class UpgradeToolMetaItem extends ToolMetaItem<UpgradeToolMetaValueItem> 
 
   @Override
   protected int getModelIndex(ItemStack stack) {
-    return stack.getCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null).getCharge() <= 0 ? 0 : 1;
+    return stack.getCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null)
+        .getCharge() <= (DURABILITY_DAMAGE * ConfigHolder.energyUsageMultiplier) ? 0 : 1;
   }
 
   @Override

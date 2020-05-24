@@ -10,13 +10,18 @@ import com.misterpemodder.upgradekit.api.behavior.ReplacementBehaviors;
 import com.misterpemodder.upgradekit.api.target.IReplacementTarget;
 import com.misterpemodder.upgradekit.api.tool.IUpgradeTool;
 import com.misterpemodder.upgradekit.impl.gui.UpgradeToolUI;
+import com.misterpemodder.upgradekit.impl.item.UpgradeToolMetaItem;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import gregtech.api.capability.GregtechCapabilities;
+import gregtech.api.capability.IElectricItem;
 import gregtech.api.gui.ModularUI;
 import gregtech.api.items.gui.ItemUIFactory;
 import gregtech.api.items.gui.PlayerInventoryHolder;
 import gregtech.api.items.metaitem.stats.IItemBehaviour;
+import gregtech.api.util.GTUtility;
+import gregtech.common.ConfigHolder;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
@@ -43,11 +48,21 @@ public class UpgradeToolComponent implements IItemBehaviour, ItemUIFactory, IUpg
     ItemStack stack = player.getHeldItem(hand);
     UpgradeToolConfig config = this.getConfig(stack);
 
-    if (player.getCooldownTracker().hasCooldown(stack.getItem()))
-      return EnumActionResult.SUCCESS;
     if (player.isSneaking()) {
       if (!world.isRemote)
         PlayerInventoryHolder.openHandItemUI(player, hand);
+      return EnumActionResult.SUCCESS;
+    }
+    if (player.getCooldownTracker().hasCooldown(stack.getItem()))
+      return EnumActionResult.SUCCESS;
+
+    IElectricItem capability = stack.getCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null);
+
+    if (capability != null
+        && capability.getCharge() < ConfigHolder.energyUsageMultiplier * UpgradeToolMetaItem.DURABILITY_DAMAGE) {
+      if (!world.isRemote)
+        player.sendStatusMessage(new TextComponentTranslation("upgradekit.error.no_power")
+            .setStyle(new Style().setColor(TextFormatting.RED)), true);
       return EnumActionResult.SUCCESS;
     }
 
@@ -101,6 +116,7 @@ public class UpgradeToolComponent implements IItemBehaviour, ItemUIFactory, IUpg
             upgradeStack.shrink(1);
             if (upgradeStack.isEmpty())
               player.inventory.deleteStack(upgradeStack);
+            GTUtility.doDamageItem(stack, UpgradeToolMetaItem.DURABILITY_DAMAGE, false);
           }
           player.sendStatusMessage(new TextComponentTranslation(translationKey,
               new TextComponentTranslation(behavior.getUnlocalizedNameForObject(replacement))), true);
