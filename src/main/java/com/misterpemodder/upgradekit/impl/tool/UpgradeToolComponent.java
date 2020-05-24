@@ -13,6 +13,10 @@ import com.misterpemodder.upgradekit.api.tool.IUpgradeTool;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import gregtech.api.gui.GuiTextures;
+import gregtech.api.gui.ModularUI;
+import gregtech.api.items.gui.ItemUIFactory;
+import gregtech.api.items.gui.PlayerInventoryHolder;
 import gregtech.api.items.metaitem.stats.IItemBehaviour;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
@@ -23,20 +27,16 @@ import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 
-public class UpgradeToolComponent implements IItemBehaviour, IUpgradeTool {
+public class UpgradeToolComponent implements IItemBehaviour, ItemUIFactory, IUpgradeTool {
   protected final int cooldown;
 
   public UpgradeToolComponent(int cooldown) {
     this.cooldown = cooldown;
-  }
-
-  private static void statusMsg(EntityPlayer player, String text) {
-    player.sendStatusMessage(new TextComponentString(text), true);
   }
 
   @Override
@@ -65,6 +65,13 @@ public class UpgradeToolComponent implements IItemBehaviour, IUpgradeTool {
     T toReplace = target.getTarget(player, world, pos, side, hitX, hitY, hitZ, hand);
 
     if (toReplace != null) {
+      if (!player.canPlayerEdit(pos, side, stack)) {
+        if (!world.isRemote)
+          player.sendStatusMessage(new TextComponentTranslation("upgradekit.error.cannot_edit")
+              .setStyle(new Style().setColor(TextFormatting.RED)), true);
+        return;
+      }
+
       for (IReplacementBehavior<T> behavior : ReplacementBehaviors.getBehaviorsForTarget(target)) {
         if (!behavior.hasReplacements(toReplace))
           continue;
@@ -73,21 +80,22 @@ public class UpgradeToolComponent implements IItemBehaviour, IUpgradeTool {
 
         if (candidate == null) {
           if (!world.isRemote)
-            statusMsg(player, TextFormatting.RED + "No replacements found in inventory");
+            player.sendStatusMessage(new TextComponentTranslation("upgradekit.error.no_replacements")
+                .setStyle(new Style().setColor(TextFormatting.RED)), true);
           return;
         }
 
         ItemStack upgradeStack = candidate.getLeft();
         ReplacementType type = candidate.getRight();
         T replacement = behavior.getReplacementFromStack(upgradeStack);
-        String line;
+        String translationKey;
 
         if (type == ReplacementType.UPGRADE)
-          line = TextFormatting.GREEN + "Upgraded" + TextFormatting.RESET + " to ";
+          translationKey = "upgradekit.replace.upgrade";
         else if (type == ReplacementType.DOWNGRADE)
-          line = TextFormatting.DARK_RED + "Downgraded" + TextFormatting.RESET + " to ";
+          translationKey = "upgradekit.replace.downgrade";
         else
-          line = TextFormatting.YELLOW + "Replaced" + TextFormatting.RESET + " with ";
+          translationKey = "upgradekit.replace.equivalent";
 
         behavior.replace(player, world, pos, side, toReplace, replacement);
         if (!world.isRemote) {
@@ -96,15 +104,16 @@ public class UpgradeToolComponent implements IItemBehaviour, IUpgradeTool {
             if (upgradeStack.isEmpty())
               player.inventory.deleteStack(upgradeStack);
           }
-          player.sendStatusMessage(new TextComponentString(line)
-              .appendSibling(new TextComponentTranslation(behavior.getUnlocalizedNameForObject(replacement))), true);
+          player.sendStatusMessage(new TextComponentTranslation(translationKey,
+              new TextComponentTranslation(behavior.getUnlocalizedNameForObject(replacement))), true);
         }
         player.getCooldownTracker().setCooldown(stack.getItem(), cooldown);
         return;
       }
     }
     if (!world.isRemote)
-      statusMsg(player, TextFormatting.RED + "Cannot be replaced");
+      player.sendStatusMessage(new TextComponentTranslation("upgradekit.error.cannot_replace")
+          .setStyle(new Style().setColor(TextFormatting.RED)), true);
   }
 
   @Override
@@ -177,4 +186,13 @@ public class UpgradeToolComponent implements IItemBehaviour, IUpgradeTool {
   public void setConfig(ItemStack stack, UpgradeToolConfig config) {
     config.writeToNbt(stack.getOrCreateSubCompound("UpgradeToolConfig"));
   }
+
+  @Override
+  public ModularUI createUI(PlayerInventoryHolder holder, EntityPlayer player) {
+    // TODO: Replace texture by EmptyTextureArea.INSTANCE
+    return ModularUI.builder(GuiTextures.BACKGROUND, 176, 60).label(9, 8, "upgradekit.gui.title")
+        .label(0, 18, "upgradekit.gui.category.selection_mode").label(0, 28, "upgradekit.gui.category.replacement_type")
+        .label(0, 38, "upgradekit.gui.category.safe_mode").build(holder, player);
+  }
+
 }

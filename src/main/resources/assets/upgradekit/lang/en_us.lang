@@ -7,6 +7,12 @@ upgradekit.mode.upgrade_only.name=Upgrade Only Mode
 upgradekit.mode.downgrade_only.name=Downgrade Only Mode
 upgradekit.mode.debug.name=Debug Mode
 upgradekit.gui.title=Upgrade Tool Configuration
-upgradekit.gui.category.selection_mode: Selection Mode
-upgradekit.gui.category.replacement_type: Replacement Type
-upgradekit.gui.category.safe_mode: Safe Mode
+upgradekit.gui.category.selection_mode=Selection Mode
+upgradekit.gui.category.replacement_type=Replacement Type
+upgradekit.gui.category.safe_mode=Safe Mode
+upgradekit.error.no_replacements=No replacements found in inventory
+upgradekit.error.cannot_replace=Cannot be replaced
+upgradekit.error.cannot_edit=Cannot edit this block
+upgradekit.replace.upgrade=§aUpgraded§r to %s
+upgradekit.replace.downgrade=§4Downgraded§r to %s
+upgradekit.replace.equivalent=§eReplaced§r with %s
