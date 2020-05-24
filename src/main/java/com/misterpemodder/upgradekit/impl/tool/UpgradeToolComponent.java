@@ -43,6 +43,18 @@ public class UpgradeToolComponent implements IItemBehaviour, ItemUIFactory, IUpg
   }
 
   @Override
+  public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer player, EnumHand hand) {
+    ItemStack stack = player.getHeldItem(hand);
+
+    if (player.isSneaking()) {
+      if (!world.isRemote)
+        PlayerInventoryHolder.openHandItemUI(player, hand);
+      return ActionResult.newResult(EnumActionResult.SUCCESS, stack);
+    }
+    return ActionResult.newResult(EnumActionResult.PASS, stack);
+  }
+
+  @Override
   public EnumActionResult onItemUseFirst(EntityPlayer player, World world, BlockPos pos, EnumFacing side, float hitX,
       float hitY, float hitZ, EnumHand hand) {
     ItemStack stack = player.getHeldItem(hand);
