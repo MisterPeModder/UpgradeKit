@@ -1,13 +1,10 @@
 package com.misterpemodder.upgradekit.impl;
 
-import java.text.DecimalFormat;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Predicate;
 
-import javax.annotation.Nullable;
-
-import com.misterpemodder.upgradekit.impl.behavior.IReplacementBehavior;
+import com.misterpemodder.upgradekit.api.UpgradeKitAPI;
+import com.misterpemodder.upgradekit.api.behavior.ReplacementBehaviors;
+import com.misterpemodder.upgradekit.api.target.ReplacementTargets;
 import com.misterpemodder.upgradekit.impl.behavior.TieredMetaTileEntityReplacementBehavior;
 import com.misterpemodder.upgradekit.impl.item.UKMetaItems;
 import com.misterpemodder.upgradekit.impl.proxy.CommonProxy;
@@ -16,13 +13,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import gregtech.api.GTValues;
-import gregtech.api.GregTechAPI;
 import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.metatileentity.TieredMetaTileEntity;
 import gregtech.api.unification.material.MaterialIconType;
 import gregtech.api.unification.material.type.Material;
 import gregtech.api.unification.ore.OrePrefix;
 import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.EnumHelper;
 import net.minecraftforge.event.RegistryEvent;
@@ -34,21 +30,18 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
-@Mod(modid = UpgradeKit.MODID, name = UpgradeKit.NAME, acceptedMinecraftVersions = "[1.12,1.13)", dependencies = "required:forge@[14.23.5.2838,);"
+@Mod(modid = UpgradeKitAPI.MOD_ID, name = UpgradeKit.NAME, acceptedMinecraftVersions = "[1.12,1.13)", dependencies = "required:forge@[14.23.5.2838,);"
     + "required-after:gregtech", version = UpgradeKit.VERSION)
 public class UpgradeKit {
-  public static final String MODID = "upgradekit";
   public static final String NAME = "Upgrade Kit";
   public static final String VERSION = "@VERSION@";
 
-  public static Logger logger = LogManager.getLogger(MODID);
-
-  private static Map<String, IReplacementBehavior<MetaTileEntity>> mteReplacementBehaviors;
+  public static Logger logger = LogManager.getLogger(UpgradeKitAPI.MOD_ID);
 
   public static MaterialIconType upgradeToolCasingMaterialIconType;
   public static OrePrefix upgradeToolCasingOrePrefix;
 
-  @SidedProxy(modId = MODID, clientSide = "com.misterpemodder.upgradekit.impl.proxy.ClientProxy", serverSide = "com.misterpemodder.upgradekit.impl.proxy.ServerProxy")
+  @SidedProxy(modId = UpgradeKitAPI.MOD_ID, clientSide = "com.misterpemodder.upgradekit.impl.proxy.ClientProxy", serverSide = "com.misterpemodder.upgradekit.impl.proxy.ServerProxy")
   public static CommonProxy proxy;
 
   public UpgradeKit() {
@@ -71,31 +64,9 @@ public class UpgradeKit {
 
   @EventHandler
   public void postInit(FMLPostInitializationEvent event) {
-    mteReplacementBehaviors = buildMteReplacementMap();
-  }
-
-  private static Map<String, IReplacementBehavior<MetaTileEntity>> buildMteReplacementMap() {
-    Map<String, IReplacementBehavior<MetaTileEntity>> map = new HashMap<>();
-    long startTime = System.nanoTime();
-
-    logger.info("Building replacement maps...");
-    for (MetaTileEntity mte : GregTechAPI.META_TILE_ENTITY_REGISTRY) {
-      if (mte instanceof TieredMetaTileEntity) {
-        String id = UpgradeKit.getMachineId(mte);
-        IReplacementBehavior<MetaTileEntity> behavior = map.get(id);
-
-        if (behavior == null) {
-          behavior = new TieredMetaTileEntityReplacementBehavior(id);
-          map.put(id, behavior);
-        }
-        behavior.addReplacementCandidate(mte);
-      }
-    }
-
-    double timeElapsedMillis = (double) (System.nanoTime() - startTime) / 1000000.0D;
-
-    logger.info("Built replacement maps in " + new DecimalFormat("#.##").format(timeElapsedMillis) + "ms");
-    return map;
+    ReplacementBehaviors.REGISTRY.freeze();
+    ReplacementTargets.REGISTRY.freeze();
+    TieredMetaTileEntityReplacementBehavior.buildCandidatesMap();
   }
 
   @SubscribeEvent(priority = EventPriority.NORMAL)
@@ -107,8 +78,7 @@ public class UpgradeKit {
     return mte.metaTileEntityId.getResourcePath().split("\\.")[0];
   }
 
-  @Nullable
-  public static IReplacementBehavior<MetaTileEntity> getReplacementBehaviorForMte(@Nullable MetaTileEntity mte) {
-    return mte == null ? null : mteReplacementBehaviors.get(getMachineId(mte));
+  public static ResourceLocation newId(String name) {
+    return new ResourceLocation(UpgradeKitAPI.MOD_ID, name);
   }
 }

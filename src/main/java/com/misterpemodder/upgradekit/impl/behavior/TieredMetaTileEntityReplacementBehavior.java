@@ -1,8 +1,12 @@
 package com.misterpemodder.upgradekit.impl.behavior;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
+import com.misterpemodder.upgradekit.api.behavior.IReplacementBehavior;
+import com.misterpemodder.upgradekit.impl.UpgradeKit;
+
+import gregtech.api.GregTechAPI;
 import gregtech.api.block.machines.MachineItemBlock;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
@@ -21,18 +25,12 @@ import net.minecraft.world.World;
 import net.minecraftforge.items.IItemHandlerModifiable;
 
 public class TieredMetaTileEntityReplacementBehavior implements IReplacementBehavior<MetaTileEntity> {
-  protected String machineId;
+  private static final Map<ResourceLocation, String> CANDIDATES = new HashMap<>();
 
-  protected Set<ResourceLocation> candidates = new HashSet<>();
-
-  public TieredMetaTileEntityReplacementBehavior(String machineId) {
-    this.machineId = machineId;
-  }
-
-  @Override
-  public void addReplacementCandidate(MetaTileEntity mte) {
-    if (mte instanceof TieredMetaTileEntity)
-      this.candidates.add(mte.metaTileEntityId);
+  public static void buildCandidatesMap() {
+    for (MetaTileEntity mte : GregTechAPI.META_TILE_ENTITY_REGISTRY)
+      if (mte instanceof TieredMetaTileEntity)
+        CANDIDATES.put(mte.metaTileEntityId, UpgradeKit.getMachineId(mte));
   }
 
   @Override
@@ -43,14 +41,19 @@ public class TieredMetaTileEntityReplacementBehavior implements IReplacementBeha
   }
 
   @Override
+  public String getUnlocalizedNameForObject(MetaTileEntity object) {
+    return object.getMetaFullName();
+  }
+
+  @Override
   public boolean hasReplacements(MetaTileEntity replaceable) {
-    return replaceable != null && this.candidates.contains(replaceable.metaTileEntityId);
+    return replaceable != null && CANDIDATES.containsKey(replaceable.metaTileEntityId);
   }
 
   @Override
   public ReplacementType getReplacementType(MetaTileEntity toReplace, MetaTileEntity replacement) {
-    if (replacement == null || !this.candidates.contains(replacement.metaTileEntityId)
-        || toReplace.metaTileEntityId.equals(replacement.metaTileEntityId))
+    if (replacement == null || toReplace.metaTileEntityId.equals(replacement.metaTileEntityId)
+        || !CANDIDATES.get(toReplace.metaTileEntityId).equals(CANDIDATES.get(replacement.metaTileEntityId)))
       return ReplacementType.NONE;
 
     int tierDifference = ((TieredMetaTileEntity) replacement).getTier() - ((TieredMetaTileEntity) toReplace).getTier();

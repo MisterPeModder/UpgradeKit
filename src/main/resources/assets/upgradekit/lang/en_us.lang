@@ -6,3 +6,7 @@ upgradekit.mode.replace.name=Replace mode
 upgradekit.mode.upgrade_only.name=Upgrade Only Mode
 upgradekit.mode.downgrade_only.name=Downgrade Only Mode
 upgradekit.mode.debug.name=Debug Mode
+upgradekit.gui.title=Upgrade Tool Configuration
+upgradekit.gui.category.selection_mode: Selection Mode
+upgradekit.gui.category.replacement_type: Replacement Type
+upgradekit.gui.category.safe_mode: Safe Mode
