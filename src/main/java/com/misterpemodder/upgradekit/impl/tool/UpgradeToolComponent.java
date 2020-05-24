@@ -1,19 +1,18 @@
 package com.misterpemodder.upgradekit.impl.tool;
 
 import java.util.List;
-import java.util.Set;
 
 import com.misterpemodder.upgradekit.api.UpgradeToolConfig;
+import com.misterpemodder.upgradekit.api.UpgradeToolConfig.ReplacementMode;
 import com.misterpemodder.upgradekit.api.behavior.IReplacementBehavior;
 import com.misterpemodder.upgradekit.api.behavior.IReplacementBehavior.ReplacementType;
 import com.misterpemodder.upgradekit.api.behavior.ReplacementBehaviors;
 import com.misterpemodder.upgradekit.api.target.IReplacementTarget;
-import com.misterpemodder.upgradekit.api.target.ReplacementTargets;
 import com.misterpemodder.upgradekit.api.tool.IUpgradeTool;
+import com.misterpemodder.upgradekit.impl.gui.UpgradeToolUI;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import gregtech.api.gui.GuiTextures;
 import gregtech.api.gui.ModularUI;
 import gregtech.api.items.gui.ItemUIFactory;
 import gregtech.api.items.gui.PlayerInventoryHolder;
@@ -21,7 +20,6 @@ import gregtech.api.items.metaitem.stats.IItemBehaviour;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
@@ -47,11 +45,11 @@ public class UpgradeToolComponent implements IItemBehaviour, ItemUIFactory, IUpg
 
     if (player.getCooldownTracker().hasCooldown(stack.getItem()))
       return EnumActionResult.SUCCESS;
-    //if (player.isSneaking()) {
-    //  if (!world.isRemote)
-    //    PlayerInventoryHolder.openHandItemUI(player, hand);
-    //  return EnumActionResult.SUCCESS;
-    //}
+    if (player.isSneaking()) {
+      if (!world.isRemote)
+        PlayerInventoryHolder.openHandItemUI(player, hand);
+      return EnumActionResult.SUCCESS;
+    }
 
     IReplacementTarget<?> target = config.getCurrentTarget();
 
@@ -146,7 +144,30 @@ public class UpgradeToolComponent implements IItemBehaviour, ItemUIFactory, IUpg
   @Override
   public void addInformation(ItemStack stack, List<String> lines) {
     IItemBehaviour.super.addInformation(stack, lines);
-    lines.add(I18n.format(this.getConfig(stack).getReplacementMode().getUnlocalizedName()));
+
+    UpgradeToolConfig config = this.getConfig(stack);
+    ReplacementMode mode = config.getReplacementMode();
+    TextFormatting modeColor;
+
+    switch (mode) {
+      case UPGRADE_ONLY:
+        modeColor = TextFormatting.GREEN;
+        break;
+      case DOWNGRADE_ONLY:
+        modeColor = TextFormatting.DARK_RED;
+        break;
+      case REPLACE:
+        modeColor = TextFormatting.YELLOW;
+        break;
+      default:
+        modeColor = TextFormatting.WHITE;
+    }
+
+    lines.add("");
+    lines.add(I18n.format("upgradekit.tooltip.replacement_target",
+        TextFormatting.GOLD + I18n.format(config.getCurrentTarget().getUnlocalizedName())));
+    lines.add(I18n.format("upgradekit.tooltip.replacement_mode", modeColor + I18n.format(mode.getName())));
+    lines.add(I18n.format("upgradekit.tooltip.safe_mode." + (config.isSafeMode() ? "enabled" : "disabled")));
   }
 
   private static <T> ReplacementType canReplace(T toReplace, ItemStack replacement, IReplacementBehavior<T> behavior,
@@ -164,35 +185,7 @@ public class UpgradeToolComponent implements IItemBehaviour, ItemUIFactory, IUpg
   }
 
   @Override
-  public UpgradeToolConfig getConfig(ItemStack stack) {
-    UpgradeToolConfig config = new UpgradeToolConfig();
-    NBTTagCompound compound = stack.getSubCompound("UpgradeToolConfig");
-
-    if (compound != null)
-      config.readFromNbt(compound);
-
-    Set<IReplacementTarget<?>> possibleTargetIds = this.getAllPossibleTargets();
-
-    if (!possibleTargetIds.contains(config.getCurrentTarget())) {
-      if (possibleTargetIds.size() > 0)
-        config.setCurrentTarget(possibleTargetIds.toArray(new IReplacementTarget<?>[0])[0]);
-      else
-        config.setCurrentTarget(ReplacementTargets.EMPTY);
-    }
-    return config;
-  }
-
-  @Override
-  public void setConfig(ItemStack stack, UpgradeToolConfig config) {
-    config.writeToNbt(stack.getOrCreateSubCompound("UpgradeToolConfig"));
-  }
-
-  @Override
   public ModularUI createUI(PlayerInventoryHolder holder, EntityPlayer player) {
-    // TODO: Replace texture by EmptyTextureArea.INSTANCE
-    return ModularUI.builder(GuiTextures.BACKGROUND, 176, 60).label(9, 8, "upgradekit.gui.title")
-        .label(0, 18, "upgradekit.gui.category.selection_mode").label(0, 28, "upgradekit.gui.category.replacement_type")
-        .label(0, 38, "upgradekit.gui.category.safe_mode").build(holder, player);
+    return UpgradeToolUI.createUI(holder, player);
   }
-
 }

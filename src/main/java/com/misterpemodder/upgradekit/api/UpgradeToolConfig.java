@@ -6,6 +6,7 @@ import com.misterpemodder.upgradekit.api.target.IReplacementTarget;
 import com.misterpemodder.upgradekit.api.target.ReplacementTargets;
 
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.IStringSerializable;
 import net.minecraft.util.ResourceLocation;
 
 /**
@@ -105,7 +106,7 @@ public class UpgradeToolConfig {
   /**
    * @since 1.0.0
    */
-  public static enum ReplacementMode {
+  public static enum ReplacementMode implements IStringSerializable {
     /**
      * Allows any type of replacement.
      * @since 1.0.0
@@ -124,8 +125,8 @@ public class UpgradeToolConfig {
      */
     DOWNGRADE_ONLY;
 
-    public String getUnlocalizedName() {
-      return "upgradekit.mode." + this.name().toLowerCase() + ".name";
+    public String getName() {
+      return "upgradekit.mode." + this.name().toLowerCase();
     }
   }
 }

@@ -29,4 +29,6 @@ public interface IReplacementTarget<T> {
   @Nullable
   T getTarget(EntityPlayer player, World world, BlockPos pos, EnumFacing side, float hitX, float hitY, float hitZ,
       EnumHand hand);
+
+  String getUnlocalizedName();
 }

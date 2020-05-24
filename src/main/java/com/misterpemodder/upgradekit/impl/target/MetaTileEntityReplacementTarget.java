@@ -16,4 +16,9 @@ public class MetaTileEntityReplacementTarget implements IReplacementTarget<MetaT
       float hitY, float hitZ, EnumHand hand) {
     return world != null ? BlockMachine.getMetaTileEntity(world, pos) : null;
   }
+
+  @Override
+  public String getUnlocalizedName() {
+    return "upgradekit.target.tile_entity";
+  }
 }

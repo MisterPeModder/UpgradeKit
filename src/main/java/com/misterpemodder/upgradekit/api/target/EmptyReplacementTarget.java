@@ -19,4 +19,9 @@ public final class EmptyReplacementTarget implements IReplacementTarget<Void> {
       float hitZ, EnumHand hand) {
     return null;
   }
+
+  @Override
+  public String getUnlocalizedName() {
+    return "upgradekit.target.empty";
+  }
 }
