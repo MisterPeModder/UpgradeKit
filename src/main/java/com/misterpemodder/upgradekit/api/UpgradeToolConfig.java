@@ -20,7 +20,7 @@ public class UpgradeToolConfig {
 
   public UpgradeToolConfig() {
     this.currentTarget = ReplacementTargets.EMPTY;
-    this.safeMode = false;
+    this.safeMode = true;
     this.replacementMode = ReplacementMode.REPLACE;
   }
 
