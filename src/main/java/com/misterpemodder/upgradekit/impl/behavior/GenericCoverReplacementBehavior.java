@@ -2,6 +2,7 @@ package com.misterpemodder.upgradekit.impl.behavior;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -111,8 +112,12 @@ public class GenericCoverReplacementBehavior implements IReplacementBehavior<Cov
           // Using Block#captureDrops to capture the items dropped by placeCoverOnSide
           CAPTURE_DROPS_METHOD.invoke(Blocks.AIR, true);
           coverHolder.placeCoverOnSide(coverSide, replacementStack, replacement);
-          for (ItemStack stack : (NonNullList<ItemStack>) CAPTURE_DROPS_METHOD.invoke(Blocks.AIR, false))
-            UpgradeKit.insertOrDropStack(world, pos, player, stack);
+
+          List<ItemStack> drops = (NonNullList<ItemStack>) CAPTURE_DROPS_METHOD.invoke(Blocks.AIR, false);
+
+          if (!player.capabilities.isCreativeMode)
+            for (ItemStack stack : drops)
+              UpgradeKit.insertOrDropStack(world, pos, player, stack);
         } catch (Exception e) {
           throw new RuntimeException("Failed to invoke Block#captureDrops", e);
         }
