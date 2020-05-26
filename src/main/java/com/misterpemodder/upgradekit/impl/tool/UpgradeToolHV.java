@@ -18,7 +18,7 @@ public class UpgradeToolHV extends UpgradeToolLV {
 
   @Override
   public float getMaxDurabilityMultiplier(ItemStack stack) {
-    return 16.0F;
+    return 48.0F;
   }
 
   @Override
