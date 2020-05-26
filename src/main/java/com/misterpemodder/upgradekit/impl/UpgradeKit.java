@@ -3,12 +3,14 @@ package com.misterpemodder.upgradekit.impl;
 import java.util.function.Predicate;
 
 import com.misterpemodder.upgradekit.api.UpgradeKitAPI;
-import com.misterpemodder.upgradekit.api.behavior.ReplacementBehaviors;
-import com.misterpemodder.upgradekit.api.target.ReplacementTargets;
+import com.misterpemodder.upgradekit.api.behavior.IReplacementBehavior;
+import com.misterpemodder.upgradekit.api.target.IReplacementTarget;
 import com.misterpemodder.upgradekit.impl.behavior.GenericCoverReplacementBehavior;
+import com.misterpemodder.upgradekit.impl.behavior.ReplacementBehaviors;
 import com.misterpemodder.upgradekit.impl.behavior.TieredMetaTileEntityReplacementBehavior;
 import com.misterpemodder.upgradekit.impl.item.UKMetaItems;
 import com.misterpemodder.upgradekit.impl.proxy.CommonProxy;
+import com.misterpemodder.upgradekit.impl.target.ReplacementTargets;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -65,14 +67,16 @@ public class UpgradeKit {
   @EventHandler
   public void preInit(FMLPreInitializationEvent event) {
     UKMetaItems.init();
+    ReplacementTargets.init();
+    ReplacementBehaviors.init();
 
     MinecraftForge.EVENT_BUS.register(this);
   }
 
   @EventHandler
   public void postInit(FMLPostInitializationEvent event) {
-    ReplacementBehaviors.REGISTRY.freeze();
-    ReplacementTargets.REGISTRY.freeze();
+    IReplacementBehavior.REGISTRY.freeze();
+    IReplacementTarget.REGISTRY.freeze();
     TieredMetaTileEntityReplacementBehavior.buildCandidatesMap();
     GenericCoverReplacementBehavior.buildCandidatesMap();
   }

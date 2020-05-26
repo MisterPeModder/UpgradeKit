@@ -7,7 +7,6 @@ import com.misterpemodder.upgradekit.api.UpgradeToolConfig;
 import com.misterpemodder.upgradekit.api.UpgradeToolConfig.ReplacementMode;
 import com.misterpemodder.upgradekit.api.behavior.IReplacementBehavior;
 import com.misterpemodder.upgradekit.api.behavior.IReplacementBehavior.ReplacementType;
-import com.misterpemodder.upgradekit.api.behavior.ReplacementBehaviors;
 import com.misterpemodder.upgradekit.api.target.IReplacementTarget;
 import com.misterpemodder.upgradekit.api.tool.IUpgradeTool;
 import com.misterpemodder.upgradekit.impl.gui.UpgradeToolUI;
@@ -107,7 +106,7 @@ public class UpgradeToolComponent implements IItemBehaviour, ItemUIFactory, IUpg
         return;
       }
 
-      for (IReplacementBehavior<T, ?> behavior : ReplacementBehaviors.getBehaviorsForTarget(target)) {
+      for (IReplacementBehavior<T, ?> behavior : IReplacementBehavior.getBehaviorsForTarget(target)) {
         if (!behavior.hasReplacements(toReplace))
           continue;
 

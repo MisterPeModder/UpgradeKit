@@ -4,7 +4,6 @@ import java.util.Set;
 
 import com.misterpemodder.upgradekit.api.UpgradeToolConfig;
 import com.misterpemodder.upgradekit.api.target.IReplacementTarget;
-import com.misterpemodder.upgradekit.api.target.ReplacementTargets;
 
 import gregtech.api.items.metaitem.stats.IItemComponent;
 import net.minecraft.item.ItemStack;
@@ -32,7 +31,7 @@ public interface IUpgradeTool extends IItemComponent {
       if (possibleTargetIds.size() > 0)
         config.setCurrentTarget(possibleTargetIds.toArray(new IReplacementTarget<?>[0])[0]);
       else
-        config.setCurrentTarget(ReplacementTargets.EMPTY);
+        config.setCurrentTarget(IReplacementTarget.EMPTY);
     }
     return config;
   }
@@ -53,6 +52,6 @@ public interface IUpgradeTool extends IItemComponent {
    * @since 1.0.0
    */
   default Set<IReplacementTarget<?>> getAllPossibleTargets() {
-    return ReplacementTargets.getAllTargets();
+    return IReplacementTarget.getAllTargets();
   }
 }

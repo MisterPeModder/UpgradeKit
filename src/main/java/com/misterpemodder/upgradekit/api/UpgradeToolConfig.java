@@ -3,7 +3,6 @@ package com.misterpemodder.upgradekit.api;
 import java.util.Locale;
 
 import com.misterpemodder.upgradekit.api.target.IReplacementTarget;
-import com.misterpemodder.upgradekit.api.target.ReplacementTargets;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.IStringSerializable;
@@ -19,13 +18,13 @@ public class UpgradeToolConfig {
   protected ReplacementMode replacementMode;
 
   public UpgradeToolConfig() {
-    this.currentTarget = ReplacementTargets.EMPTY;
+    this.currentTarget = IReplacementTarget.EMPTY;
     this.safeMode = true;
     this.replacementMode = ReplacementMode.REPLACE;
   }
 
   /**
-   * @return The current selected target or {@link ReplacementTargets#EMPTY} if there is none.
+   * @return The current selected target or {@link IReplacementTarget#EMPTY} if there is none.
    * @since 1.0.0
    */
   public IReplacementTarget<?> getCurrentTarget() {
@@ -80,9 +79,9 @@ public class UpgradeToolConfig {
 
   public void readFromNbt(NBTTagCompound compound) {
     ResourceLocation targetId = new ResourceLocation(compound.getString("SelectedTarget"));
-    IReplacementTarget<?> target = ReplacementTargets.REGISTRY.getObject(targetId);
+    IReplacementTarget<?> target = IReplacementTarget.REGISTRY.getObject(targetId);
 
-    this.setCurrentTarget(target != null ? target : ReplacementTargets.EMPTY);
+    this.setCurrentTarget(target != null ? target : IReplacementTarget.EMPTY);
     try {
       this.setReplacementMode(ReplacementMode.valueOf(compound.getString("ReplacementMode").toUpperCase(Locale.ROOT)));
     } catch (IllegalArgumentException e) {
@@ -93,7 +92,7 @@ public class UpgradeToolConfig {
 
   public void writeToNbt(NBTTagCompound compound) {
     IReplacementTarget<?> target = this.getCurrentTarget();
-    ResourceLocation targetId = ReplacementTargets.REGISTRY.getNameForObject(target);
+    ResourceLocation targetId = IReplacementTarget.REGISTRY.getNameForObject(target);
 
     if (targetId == null)
       throw new IllegalStateException(
