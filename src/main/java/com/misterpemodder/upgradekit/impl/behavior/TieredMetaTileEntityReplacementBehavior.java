@@ -10,6 +10,8 @@ import com.misterpemodder.upgradekit.impl.UpgradeKit;
 
 import gregtech.api.GregTechAPI;
 import gregtech.api.block.machines.MachineItemBlock;
+import gregtech.api.capability.GregtechCapabilities;
+import gregtech.api.capability.IEnergyContainer;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.MetaTileEntityHolder;
 import gregtech.api.metatileentity.TieredMetaTileEntity;
@@ -69,7 +71,6 @@ public class TieredMetaTileEntityReplacementBehavior implements IReplacementBeha
     TieredMetaTileEntity toReplaceMte = (TieredMetaTileEntity) ((MetaTileEntityHolder) toReplace).getMetaTileEntity();
     IBlockState state = world.getBlockState(pos);
     MetaTileEntityHolder mteHolder = toReplaceMte.getHolder();
-    NBTTagCompound compound = mteHolder.writeToNBT(new NBTTagCompound());
 
     if (!world.isRemote) {
       if (!player.capabilities.isCreativeMode) {
@@ -101,7 +102,23 @@ public class TieredMetaTileEntityReplacementBehavior implements IReplacementBeha
         if (!player.inventory.addItemStackToInventory(slotStack))
           Block.spawnAsEntity(world, pos, slotStack);
       }
+
+      IEnergyContainer toReplaceEnergy = toReplace.getCapability(GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER,
+          null);
+      IEnergyContainer replacementEnergy = replacement.getCapability(GregtechCapabilities.CAPABILITY_ENERGY_CONTAINER,
+          null);
+
+      if (toReplaceEnergy != null && replacementEnergy != null) {
+        long energyStored = toReplaceEnergy.getEnergyStored();
+        long newCapacity = replacementEnergy.getEnergyCapacity();
+
+        if (energyStored > newCapacity)
+          toReplaceEnergy.removeEnergy(energyStored - newCapacity);
+      }
     }
+
+    NBTTagCompound compound = mteHolder.writeToNBT(new NBTTagCompound());
+
     compound.setString("MetaId", replacement.metaTileEntityId.toString());
     mteHolder.readFromNBT(compound);
     mteHolder.markDirty();
