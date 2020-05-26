@@ -151,9 +151,22 @@ public class UpgradeToolComponent implements IItemBehaviour, ItemUIFactory, IUpg
         return;
       }
     }
-    if (!world.isRemote)
-      player.sendStatusMessage(new TextComponentTranslation("upgradekit.error.cannot_replace")
-          .setStyle(new Style().setColor(TextFormatting.RED)), true);
+    if (!world.isRemote) {
+      String errorMsg = "upgradekit.error.cannot_";
+
+      switch (config.getReplacementMode()) {
+        case UPGRADE_ONLY:
+          errorMsg += "upgrade";
+          break;
+        case DOWNGRADE_ONLY:
+          errorMsg += "downgrade";
+          break;
+        default:
+          errorMsg += "replace";
+      }
+      player.sendStatusMessage(
+          new TextComponentTranslation(errorMsg).setStyle(new Style().setColor(TextFormatting.RED)), true);
+    }
   }
 
   @Override
