@@ -1,6 +1,7 @@
 package com.misterpemodder.upgradekit.impl.tool;
 
 import java.util.List;
+import java.util.Locale;
 
 import com.misterpemodder.upgradekit.api.UpgradeToolConfig;
 import com.misterpemodder.upgradekit.api.UpgradeToolConfig.ReplacementMode;
@@ -60,6 +61,8 @@ public class UpgradeToolComponent implements IItemBehaviour, ItemUIFactory, IUpg
     ItemStack stack = player.getHeldItem(hand);
     UpgradeToolConfig config = this.getConfig(stack);
 
+    if (world == null)
+      return EnumActionResult.PASS;
     if (player.isSneaking()) {
       if (!world.isRemote)
         PlayerInventoryHolder.openHandItemUI(player, hand);
@@ -80,6 +83,7 @@ public class UpgradeToolComponent implements IItemBehaviour, ItemUIFactory, IUpg
 
     IReplacementTarget<?> target = config.getCurrentTarget();
 
+    player.getCooldownTracker().setCooldown(stack.getItem(), cooldown);
     this.tryReplaceTarget(target, stack, config, player, world, pos, side, hitX, hitY, hitZ, hand);
     return EnumActionResult.SUCCESS;
   }
@@ -89,6 +93,12 @@ public class UpgradeToolComponent implements IItemBehaviour, ItemUIFactory, IUpg
       EnumHand hand) {
     T toReplace = target.getTarget(player, world, pos, side, hitX, hitY, hitZ, hand);
 
+    if (toReplace == null) {
+      if (!world.isRemote)
+        player.sendStatusMessage(new TextComponentTranslation("upgradekit.error.no_target")
+            .setStyle(new Style().setColor(TextFormatting.RED)), true);
+      return;
+    }
     if (toReplace != null) {
       if (!player.canPlayerEdit(pos, side, stack)) {
         if (!world.isRemote)
@@ -97,43 +107,47 @@ public class UpgradeToolComponent implements IItemBehaviour, ItemUIFactory, IUpg
         return;
       }
 
-      for (IReplacementBehavior<T> behavior : ReplacementBehaviors.getBehaviorsForTarget(target)) {
+      for (IReplacementBehavior<T, ?> behavior : ReplacementBehaviors.getBehaviorsForTarget(target)) {
         if (!behavior.hasReplacements(toReplace))
           continue;
 
-        Pair<ItemStack, ReplacementType> candidate = findCandidate(player, toReplace, config, behavior);
+        Pair<ReplacementType, ItemStack> candidate = findCandidate(player, config, world, pos, side, toReplace,
+            behavior);
+        ReplacementType expectedType = candidate.getLeft();
+        ItemStack replacementStack = candidate.getRight();
 
-        if (candidate == null) {
+        if (expectedType == ReplacementType.NONE) {
           if (!world.isRemote)
             player.sendStatusMessage(new TextComponentTranslation("upgradekit.error.no_replacements")
                 .setStyle(new Style().setColor(TextFormatting.RED)), true);
           return;
         }
 
-        ItemStack upgradeStack = candidate.getLeft();
-        ReplacementType type = candidate.getRight();
-        T replacement = behavior.getReplacementFromStack(upgradeStack);
-        String translationKey;
+        Pair<ReplacementType, String> results = performReplacement(player, world, pos, side, toReplace,
+            replacementStack, behavior, expectedType);
+        ReplacementType type = results.getLeft();
+        String replacementMessage = results.getRight();
 
-        if (type == ReplacementType.UPGRADE)
-          translationKey = "upgradekit.replace.upgrade";
-        else if (type == ReplacementType.DOWNGRADE)
-          translationKey = "upgradekit.replace.downgrade";
-        else
-          translationKey = "upgradekit.replace.equivalent";
-
-        behavior.replace(player, world, pos, side, toReplace, replacement);
         if (!world.isRemote) {
-          if (!player.capabilities.isCreativeMode) {
-            upgradeStack.shrink(1);
-            if (upgradeStack.isEmpty())
-              player.inventory.deleteStack(upgradeStack);
+          if (!player.capabilities.isCreativeMode)
             GTUtility.doDamageItem(stack, UpgradeToolMetaItem.DURABILITY_DAMAGE, false);
+          if (type == ReplacementType.NONE) {
+            player.sendStatusMessage(
+                new TextComponentTranslation(replacementMessage).setStyle(new Style().setColor(TextFormatting.RED)),
+                true);
+          } else {
+            String translationKey;
+
+            if (type == ReplacementType.UPGRADE)
+              translationKey = "upgradekit.replace.upgrade";
+            else if (type == ReplacementType.DOWNGRADE)
+              translationKey = "upgradekit.replace.downgrade";
+            else
+              translationKey = "upgradekit.replace.equivalent";
+            player.sendStatusMessage(
+                new TextComponentTranslation(translationKey, new TextComponentTranslation(replacementMessage)), true);
           }
-          player.sendStatusMessage(new TextComponentTranslation(translationKey,
-              new TextComponentTranslation(behavior.getUnlocalizedNameForObject(replacement))), true);
         }
-        player.getCooldownTracker().setCooldown(stack.getItem(), cooldown);
         return;
       }
     }
@@ -148,25 +162,58 @@ public class UpgradeToolComponent implements IItemBehaviour, ItemUIFactory, IUpg
     return ActionResult.newResult(EnumActionResult.PASS, player.getHeldItem(hand));
   }
 
-  private static <T> Pair<ItemStack, ReplacementType> findCandidate(EntityPlayer player, T toReplace,
-      UpgradeToolConfig config, IReplacementBehavior<T> behavior) {
+  private static <T, R> Pair<ReplacementType, ItemStack> findCandidate(EntityPlayer player, UpgradeToolConfig config,
+      World world, BlockPos pos, EnumFacing side, T toReplace, IReplacementBehavior<T, R> behavior) {
     ItemStack stack = player.getHeldItem(EnumHand.OFF_HAND);
-    ReplacementType type = canReplace(toReplace, stack, behavior, config);
+    ReplacementType type = canReplace(player, config, world, pos, side, toReplace, behavior, stack);
 
     if (type != ReplacementType.NONE)
-      return Pair.of(stack, type);
+      return Pair.of(type, stack);
     stack = player.getHeldItem(EnumHand.MAIN_HAND);
-    type = canReplace(toReplace, stack, behavior, config);
+    type = canReplace(player, config, world, pos, side, toReplace, behavior, stack);
     if (type != ReplacementType.NONE)
-      return Pair.of(stack, type);
+      return Pair.of(type, stack);
 
     for (int i = 0; i < player.inventory.getSizeInventory(); ++i) {
       stack = player.inventory.getStackInSlot(i);
-      type = canReplace(toReplace, stack, behavior, config);
+      type = canReplace(player, config, world, pos, side, toReplace, behavior, stack);
       if (type != ReplacementType.NONE)
-        return Pair.of(stack, type);
+        return Pair.of(type, stack);
     }
-    return null;
+    return Pair.of(ReplacementType.NONE, ItemStack.EMPTY);
+  }
+
+  private static <T, R> ReplacementType canReplace(EntityPlayer player, UpgradeToolConfig config, World world,
+      BlockPos pos, EnumFacing side, T toReplace, IReplacementBehavior<T, R> behavior, ItemStack replacementStack) {
+    R replacement = behavior.getReplacementFromStack(replacementStack);
+
+    if (replacement == null)
+      return ReplacementType.NONE;
+
+    ReplacementType type = behavior.replace(player, world, pos, side, toReplace, replacement, replacementStack, true);
+
+    switch (config.getReplacementMode()) {
+      case UPGRADE_ONLY:
+        return type == ReplacementType.UPGRADE ? ReplacementType.UPGRADE : ReplacementType.NONE;
+      case DOWNGRADE_ONLY:
+        return type == ReplacementType.DOWNGRADE ? ReplacementType.DOWNGRADE : ReplacementType.NONE;
+      default:
+        return type;
+    }
+  }
+
+  private static <T, R> Pair<ReplacementType, String> performReplacement(EntityPlayer player, World world, BlockPos pos,
+      EnumFacing side, T toReplace, ItemStack replacementStack, IReplacementBehavior<T, R> behavior,
+      ReplacementType expectedType) {
+    R replacement = behavior.getReplacementFromStack(replacementStack);
+    ReplacementType type = behavior.replace(player, world, pos, side, toReplace, replacement, replacementStack, false);
+    String key;
+
+    if (type != ReplacementType.NONE)
+      key = behavior.getUnlocalizedNameForReplacement(replacement);
+    else
+      key = "upgradekit.error.failure." + expectedType.name().toLowerCase(Locale.ROOT);
+    return Pair.of(type, key);
   }
 
   @Override
@@ -196,20 +243,6 @@ public class UpgradeToolComponent implements IItemBehaviour, ItemUIFactory, IUpg
         TextFormatting.GOLD + I18n.format(config.getCurrentTarget().getUnlocalizedName())));
     lines.add(I18n.format("upgradekit.tooltip.replacement_mode", modeColor + I18n.format(mode.getName())));
     lines.add(I18n.format("upgradekit.tooltip.safe_mode." + (config.isSafeMode() ? "enabled" : "disabled")));
-  }
-
-  private static <T> ReplacementType canReplace(T toReplace, ItemStack replacement, IReplacementBehavior<T> behavior,
-      UpgradeToolConfig config) {
-    ReplacementType type = behavior.getReplacementType(toReplace, behavior.getReplacementFromStack(replacement));
-
-    switch (config.getReplacementMode()) {
-      case UPGRADE_ONLY:
-        return type == ReplacementType.UPGRADE ? ReplacementType.UPGRADE : ReplacementType.NONE;
-      case DOWNGRADE_ONLY:
-        return type == ReplacementType.DOWNGRADE ? ReplacementType.DOWNGRADE : ReplacementType.NONE;
-      default:
-        return type;
-    }
   }
 
   @Override

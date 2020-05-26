@@ -5,6 +5,7 @@ import java.util.function.Predicate;
 import com.misterpemodder.upgradekit.api.UpgradeKitAPI;
 import com.misterpemodder.upgradekit.api.behavior.ReplacementBehaviors;
 import com.misterpemodder.upgradekit.api.target.ReplacementTargets;
+import com.misterpemodder.upgradekit.impl.behavior.GenericCoverReplacementBehavior;
 import com.misterpemodder.upgradekit.impl.behavior.TieredMetaTileEntityReplacementBehavior;
 import com.misterpemodder.upgradekit.impl.item.UKMetaItems;
 import com.misterpemodder.upgradekit.impl.proxy.CommonProxy;
@@ -13,12 +14,18 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import gregtech.api.GTValues;
+import gregtech.api.cover.CoverDefinition;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.unification.material.MaterialIconType;
 import gregtech.api.unification.material.type.Material;
 import gregtech.api.unification.ore.OrePrefix;
+import net.minecraft.block.Block;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.EnumHelper;
 import net.minecraftforge.event.RegistryEvent;
@@ -67,6 +74,7 @@ public class UpgradeKit {
     ReplacementBehaviors.REGISTRY.freeze();
     ReplacementTargets.REGISTRY.freeze();
     TieredMetaTileEntityReplacementBehavior.buildCandidatesMap();
+    GenericCoverReplacementBehavior.buildCandidatesMap();
   }
 
   @SubscribeEvent(priority = EventPriority.NORMAL)
@@ -74,11 +82,20 @@ public class UpgradeKit {
     RecipeHandler.init();
   }
 
-  public static String getMachineId(MetaTileEntity mte) {
+  public static String getMachineTypeId(MetaTileEntity mte) {
     return mte.metaTileEntityId.getResourcePath().split("\\.")[0];
+  }
+
+  public static String getCoverTypeId(CoverDefinition cover) {
+    return cover.getCoverId().getResourcePath().split("\\.")[0];
   }
 
   public static ResourceLocation newId(String name) {
     return new ResourceLocation(UpgradeKitAPI.MOD_ID, name);
+  }
+
+  public static void insertOrDropStack(World world, BlockPos pos, EntityPlayer player, ItemStack stack) {
+    if (!player.inventory.addItemStackToInventory(stack))
+      Block.spawnAsEntity(world, pos, stack);
   }
 }

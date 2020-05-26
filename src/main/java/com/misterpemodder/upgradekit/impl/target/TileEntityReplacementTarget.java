@@ -2,19 +2,18 @@ package com.misterpemodder.upgradekit.impl.target;
 
 import com.misterpemodder.upgradekit.api.target.IReplacementTarget;
 
-import gregtech.api.block.machines.BlockMachine;
-import gregtech.api.metatileentity.MetaTileEntity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-public class MetaTileEntityReplacementTarget implements IReplacementTarget<MetaTileEntity> {
+public class TileEntityReplacementTarget implements IReplacementTarget<TileEntity> {
   @Override
-  public MetaTileEntity getTarget(EntityPlayer player, World world, BlockPos pos, EnumFacing side, float hitX,
-      float hitY, float hitZ, EnumHand hand) {
-    return world != null ? BlockMachine.getMetaTileEntity(world, pos) : null;
+  public TileEntity getTarget(EntityPlayer player, World world, BlockPos pos, EnumFacing side, float hitX, float hitY,
+      float hitZ, EnumHand hand) {
+    return world.getTileEntity(pos);
   }
 
   @Override

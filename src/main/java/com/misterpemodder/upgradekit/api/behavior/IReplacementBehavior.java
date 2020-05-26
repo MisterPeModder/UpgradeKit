@@ -10,9 +10,11 @@ import net.minecraft.world.World;
 
 /**
  * @author MisterPeModder
+ * @param <T> The type of object to replace.
+ * @param <R> The type of replacement object.
  * @since 1.0.0
  */
-public interface IReplacementBehavior<T> {
+public interface IReplacementBehavior<T, R> {
   /**
    * Gets a replacement object from an {@link ItemStack}.
    * 
@@ -21,30 +23,36 @@ public interface IReplacementBehavior<T> {
    * @since 1.0.0
    */
   @Nullable
-  T getReplacementFromStack(ItemStack stack);
+  R getReplacementFromStack(ItemStack stack);
 
   /**
-   * @param object The object.
-   * @return The unlocalized name of this object.
+   * @param object The replacement object.
+   * @return The unlocalized name of this replecement object.
    * @since 1.0.0
    */
-  String getUnlocalizedNameForObject(T object);
+  String getUnlocalizedNameForReplacement(R object);
 
   /**
    * Queries if the passed object can be replaced by something else.
    * 
-   * @param replaceable The object to query, can be null.
-   * @return Is there a replacement available? always false if {@code replaceable} is null.
+   * @param target The object to query, can be null.
+   * @return Is there a replacement available? always false if {@code target} is null.
    * @since 1.0.0
    */
-  boolean hasReplacements(@Nullable T replaceable);
+  boolean hasReplacements(@Nullable T target);
 
   /**
-   * Can {@code toReplace} be replaced with {@code replacement}?
+   * Replaces {@code toReplace} by  {@code replacement}.
    * This method assumes that {@code this.hasReplacements(toReplace) == true}.
    * 
-   * @param toReplace   The object that may be replaceable.
-   * @param replacement The replacement candidate, may be null.
+   * @param config           The replacement configuration.
+   * @param player           The player, may be null.
+   * @param world            The world the player is in.
+   * @param pos              The position of the target block.
+   * @param side             The target side.
+   * @param toReplace        The old object to be replaced.
+   * @param replacement      The new object.
+   * @param replacementStack The item stack the replacement came from.
    * @return <ul>
    *  <li>{@link ReplacementType#NONE}: if {@code replacement} cannot replace {@code toReplace}.</li>
    *  <li>{@link ReplacementType#EQUIVALENT}: if {@code replacement} has the same tier as {@code toReplace}.</li>
@@ -53,23 +61,16 @@ public interface IReplacementBehavior<T> {
    * </ul>
    * @since 1.0.0
    */
-  ReplacementType getReplacementType(T toReplace, @Nullable T replacement);
+  ReplacementType replace(@Nullable EntityPlayer player, World world, BlockPos pos, EnumFacing side, T toReplace,
+      R replacement, ItemStack replacementStack, boolean simulate);
 
   /**
-   * Replaces {@code toReplace} by  {@code replacement}.
-   * This method assumes that {@code this.canReplaceWith(config, toReplace, replacement) == true}.
-   * 
-   * @param config      The replacement configuration.
-   * @param player      The player.
-   * @param world       The world the player is in.
-   * @param pos         The position of the target block.
-   * @param side        The target side.
-   * @param toReplace   The old object to be replaced.
-   * @param replacement The new object.
-   * @return true is operation succeded, false otherwise.
+   * @return The priority of this behavior
    * @since 1.0.0
    */
-  boolean replace(EntityPlayer player, World world, BlockPos pos, EnumFacing side, T toReplace, T replacement);
+  default int getPriority() {
+    return 1000;
+  }
 
   /**
    * @since 1.0.0

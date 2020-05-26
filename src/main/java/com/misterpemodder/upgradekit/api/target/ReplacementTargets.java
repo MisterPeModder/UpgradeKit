@@ -5,9 +5,11 @@ import java.util.Set;
 import com.google.common.collect.ImmutableSet;
 import com.misterpemodder.upgradekit.api.util.FreezableNamespacedRegistry;
 import com.misterpemodder.upgradekit.impl.UpgradeKit;
-import com.misterpemodder.upgradekit.impl.target.MetaTileEntityReplacementTarget;
+import com.misterpemodder.upgradekit.impl.target.CoverReplacementTarget;
+import com.misterpemodder.upgradekit.impl.target.TileEntityReplacementTarget;
 
-import gregtech.api.metatileentity.MetaTileEntity;
+import gregtech.api.cover.CoverBehavior;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
 
 /**
@@ -24,9 +26,11 @@ public final class ReplacementTargets {
 
   public static final ResourceLocation EMPTY_ID = UpgradeKit.newId("empty");
 
-  public static final IReplacementTarget<MetaTileEntity> META_TILE_ENTITY = register(
-      UpgradeKit.newId("meta_tile_entity"), new MetaTileEntityReplacementTarget());
   public static final IReplacementTarget<Void> EMPTY = register(EMPTY_ID, new EmptyReplacementTarget());
+  public static final IReplacementTarget<TileEntity> TILE_ENTITY = register(UpgradeKit.newId("tile_entity"),
+      new TileEntityReplacementTarget());
+  public static final IReplacementTarget<CoverBehavior> COVER = register(UpgradeKit.newId("cover"),
+      new CoverReplacementTarget());
 
   private static Set<IReplacementTarget<?>> targets;
 

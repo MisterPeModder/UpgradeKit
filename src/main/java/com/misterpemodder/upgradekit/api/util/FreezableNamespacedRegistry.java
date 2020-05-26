@@ -14,6 +14,8 @@ import net.minecraft.util.IntIdentityHashBiMap;
 import net.minecraft.util.registry.RegistrySimple;
 
 /**
+ * @param <K> The type of keys.
+ * @param <V> The type of values.
  * @since 1.0.0
  */
 public class FreezableNamespacedRegistry<K, V> extends RegistrySimple<K, V> {
@@ -31,16 +33,15 @@ public class FreezableNamespacedRegistry<K, V> extends RegistrySimple<K, V> {
   }
 
   public void freeze() {
-    if (this.frozen)
+    if (this.isFrozen())
       throw new IllegalStateException("Registry is already frozen!");
+    this.cachedValueSet = this.getValues();
     this.frozen = true;
   }
 
   public Set<V> getValues() {
-    if (!this.frozen)
+    if (!this.isFrozen())
       return ImmutableSet.copyOf(this.registryObjects.values());
-    if (this.cachedValueSet == null)
-      this.cachedValueSet = ImmutableSet.copyOf(this.registryObjects.values());
     return this.cachedValueSet;
   }
 
