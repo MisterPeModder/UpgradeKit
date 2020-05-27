@@ -1,7 +1,5 @@
 package com.misterpemodder.upgradekit.impl.item;
 
-import com.misterpemodder.upgradekit.api.tool.IUpgradeTool;
-import com.misterpemodder.upgradekit.api.tool.IUpgradeToolProvider;
 import com.misterpemodder.upgradekit.impl.UpgradeKit;
 import com.misterpemodder.upgradekit.impl.item.UpgradeToolMetaItem.UpgradeToolMetaValueItem;
 import com.misterpemodder.upgradekit.impl.tool.UpgradeToolComponent;
@@ -12,7 +10,6 @@ import com.misterpemodder.upgradekit.impl.tool.UpgradeToolMV;
 import gregtech.api.capability.GregtechCapabilities;
 import gregtech.api.capability.IElectricItem;
 import gregtech.api.items.metaitem.ElectricStats;
-import gregtech.api.items.metaitem.stats.IItemComponent;
 import gregtech.api.items.metaitem.stats.IItemDurabilityManager;
 import gregtech.api.items.toolitem.ToolMetaItem;
 import gregtech.common.ConfigHolder;
@@ -56,9 +53,7 @@ public class UpgradeToolMetaItem extends ToolMetaItem<UpgradeToolMetaValueItem> 
     return super.getRGBDurabilityForDisplay(stack);
   }
 
-  public class UpgradeToolMetaValueItem extends ToolMetaItem<?>.MetaToolValueItem implements IUpgradeToolProvider {
-    private IUpgradeTool upgradeTool;
-
+  public class UpgradeToolMetaValueItem extends ToolMetaItem<?>.MetaToolValueItem {
     protected UpgradeToolMetaValueItem(int metaValue, String unlocalizedName) {
       super(metaValue, unlocalizedName);
     }
@@ -71,19 +66,6 @@ public class UpgradeToolMetaItem extends ToolMetaItem<UpgradeToolMetaValueItem> 
     @Override
     public IItemDurabilityManager getDurabilityManager() {
       return UpgradeToolDurabilityManager.INSTANCE;
-    }
-
-    @Override
-    public ToolMetaItem<?>.MetaToolValueItem addComponents(IItemComponent... stats) {
-      for (IItemComponent stat : stats)
-        if (stat instanceof IUpgradeTool)
-          this.upgradeTool = (IUpgradeTool) stat;
-      return super.addComponents(stats);
-    }
-
-    @Override
-    public IUpgradeTool getUpgradeTool() {
-      return this.upgradeTool;
     }
   }
 

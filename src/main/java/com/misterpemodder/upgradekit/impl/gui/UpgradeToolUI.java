@@ -5,9 +5,9 @@ import java.util.List;
 import com.google.common.collect.ImmutableList;
 import com.misterpemodder.upgradekit.api.UpgradeToolConfig;
 import com.misterpemodder.upgradekit.api.UpgradeToolConfig.ReplacementMode;
+import com.misterpemodder.upgradekit.api.capability.CapabilityUpgradeTool;
+import com.misterpemodder.upgradekit.api.capability.IUpgradeTool;
 import com.misterpemodder.upgradekit.api.target.IReplacementTarget;
-import com.misterpemodder.upgradekit.api.tool.IUpgradeTool;
-import com.misterpemodder.upgradekit.api.tool.IUpgradeToolProvider;
 
 import gregtech.api.gui.GuiTextures;
 import gregtech.api.gui.ModularUI;
@@ -28,7 +28,7 @@ public final class UpgradeToolUI {
             () -> getSafeMode(holder), pressed -> setSafeMode(holder, pressed)));
 
     ItemStack stack = holder.getCurrentItem();
-    IUpgradeTool tool = IUpgradeToolProvider.getUpgradeToolForStack(stack);
+    IUpgradeTool tool = stack.getCapability(CapabilityUpgradeTool.INSTANCE, null);
 
     if (tool != null) {
       List<IReplacementTarget<?>> possibleTargets = ImmutableList.copyOf(tool.getAllPossibleTargets());
@@ -43,70 +43,65 @@ public final class UpgradeToolUI {
   }
 
   private static int getTargetIndex(PlayerInventoryHolder holder, List<IReplacementTarget<?>> possibleTargets) {
-    ItemStack stack = holder.getCurrentItem();
-    IUpgradeTool tool = IUpgradeToolProvider.getUpgradeToolForStack(stack);
+    IUpgradeTool tool = holder.getCurrentItem().getCapability(CapabilityUpgradeTool.INSTANCE, null);
 
     if (tool == null)
       return 0;
-    return Math.max(0, possibleTargets.indexOf(tool.getConfig(stack).getCurrentTarget()));
+    return Math.max(0, possibleTargets.indexOf(tool.getConfig().getCurrentTarget()));
   }
 
   private static void setTargetIndex(PlayerInventoryHolder holder, List<IReplacementTarget<?>> possibleTargets,
       int index) {
-    ItemStack stack = holder.getCurrentItem();
-    IUpgradeTool tool = IUpgradeToolProvider.getUpgradeToolForStack(stack);
+    IUpgradeTool tool = holder.getCurrentItem().getCapability(CapabilityUpgradeTool.INSTANCE, null);
 
     if (tool == null)
       return;
 
-    UpgradeToolConfig config = tool.getConfig(stack);
+    UpgradeToolConfig config = tool.getConfig();
 
     if (!possibleTargets.isEmpty() && index < possibleTargets.size())
       config.setCurrentTarget(possibleTargets.get(index));
-    tool.setConfig(stack, config);
+    tool.setConfig(config);
   }
 
   private static ReplacementMode getReplacementMode(PlayerInventoryHolder holder) {
-    ItemStack stack = holder.getCurrentItem();
-    IUpgradeTool tool = IUpgradeToolProvider.getUpgradeToolForStack(stack);
+    IUpgradeTool tool = holder.getCurrentItem().getCapability(CapabilityUpgradeTool.INSTANCE, null);
 
     if (tool == null)
       return ReplacementMode.REPLACE;
-    return tool.getConfig(stack).getReplacementMode();
+    return tool.getConfig().getReplacementMode();
   }
 
   private static void setReplacementMode(PlayerInventoryHolder holder, ReplacementMode mode) {
-    ItemStack stack = holder.getCurrentItem();
-    IUpgradeTool tool = IUpgradeToolProvider.getUpgradeToolForStack(stack);
+    IUpgradeTool tool = holder.getCurrentItem().getCapability(CapabilityUpgradeTool.INSTANCE, null);
 
     if (tool == null)
       return;
 
-    UpgradeToolConfig config = tool.getConfig(stack);
+    UpgradeToolConfig config = tool.getConfig();
 
     config.setReplacementMode(mode);
-    tool.setConfig(stack, config);
+    tool.setConfig(config);
   }
 
   private static boolean getSafeMode(PlayerInventoryHolder holder) {
     ItemStack stack = holder.getCurrentItem();
-    IUpgradeTool tool = IUpgradeToolProvider.getUpgradeToolForStack(stack);
+    IUpgradeTool tool = stack.getCapability(CapabilityUpgradeTool.INSTANCE, null);
 
     if (tool == null)
       return false;
-    return tool.getConfig(stack).isSafeMode();
+    return tool.getConfig().isSafeMode();
   }
 
   private static void setSafeMode(PlayerInventoryHolder holder, boolean safeMode) {
-    ItemStack stack = holder.getCurrentItem();
-    IUpgradeTool tool = IUpgradeToolProvider.getUpgradeToolForStack(stack);
+    IUpgradeTool tool = holder.getCurrentItem().getCapability(CapabilityUpgradeTool.INSTANCE, null);
 
     if (tool == null)
       return;
 
-    UpgradeToolConfig config = tool.getConfig(stack);
+    UpgradeToolConfig config = tool.getConfig();
 
     config.setSafeMode(safeMode);
-    tool.setConfig(stack, config);
+    tool.setConfig(config);
   }
 }

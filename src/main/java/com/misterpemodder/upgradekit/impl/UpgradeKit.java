@@ -4,6 +4,7 @@ import java.util.function.Predicate;
 
 import com.misterpemodder.upgradekit.api.UpgradeKitAPI;
 import com.misterpemodder.upgradekit.api.behavior.IReplacementBehavior;
+import com.misterpemodder.upgradekit.api.capability.CapabilityUpgradeTool;
 import com.misterpemodder.upgradekit.api.target.IReplacementTarget;
 import com.misterpemodder.upgradekit.impl.behavior.GenericCoverReplacementBehavior;
 import com.misterpemodder.upgradekit.impl.behavior.ReplacementBehaviors;
@@ -66,6 +67,7 @@ public class UpgradeKit {
 
   @EventHandler
   public void preInit(FMLPreInitializationEvent event) {
+    CapabilityUpgradeTool.register();
     UKMetaItems.init();
     ReplacementTargets.init();
     ReplacementBehaviors.init();
