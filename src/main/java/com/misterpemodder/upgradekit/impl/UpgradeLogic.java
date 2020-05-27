@@ -12,10 +12,7 @@ import com.misterpemodder.upgradekit.impl.item.UpgradeToolMetaItem;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import gregtech.api.capability.GregtechCapabilities;
-import gregtech.api.capability.IElectricItem;
 import gregtech.api.items.gui.PlayerInventoryHolder;
-import gregtech.common.ConfigHolder;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
@@ -47,10 +44,7 @@ public final class UpgradeLogic {
     if (player.getCooldownTracker().hasCooldown(stack.getItem()))
       return true;
 
-    IElectricItem capability = stack.getCapability(GregtechCapabilities.CAPABILITY_ELECTRIC_ITEM, null);
-
-    if (capability != null
-        && capability.getCharge() < ConfigHolder.energyUsageMultiplier * UpgradeToolMetaItem.DURABILITY_DAMAGE) {
+    if (!tool.canUse(player, world)) {
       if (!world.isRemote)
         player.sendStatusMessage(new TextComponentTranslation("upgradekit.error.no_power")
             .setStyle(new Style().setColor(TextFormatting.RED)), true);
