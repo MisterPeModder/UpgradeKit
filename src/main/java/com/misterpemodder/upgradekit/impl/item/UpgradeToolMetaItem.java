@@ -1,7 +1,6 @@
 package com.misterpemodder.upgradekit.impl.item;
 
 import com.misterpemodder.upgradekit.impl.UpgradeKit;
-import com.misterpemodder.upgradekit.impl.item.UpgradeToolMetaItem.UpgradeToolMetaValueItem;
 import com.misterpemodder.upgradekit.impl.tool.UpgradeToolComponent;
 import com.misterpemodder.upgradekit.impl.tool.UpgradeToolHV;
 import com.misterpemodder.upgradekit.impl.tool.UpgradeToolLV;
@@ -16,25 +15,25 @@ import gregtech.common.ConfigHolder;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.MathHelper;
 
-public class UpgradeToolMetaItem extends ToolMetaItem<UpgradeToolMetaValueItem> {
+public class UpgradeToolMetaItem extends ToolMetaItem<ToolMetaItem<?>.MetaToolValueItem> {
   public static final int DURABILITY_DAMAGE = 50;
 
   @Override
+  @SuppressWarnings("deprecation")
   public void registerSubItems() {
-    UKMetaItems.UPGRADE_TOOL_LV = (UpgradeToolMetaValueItem) this.addItem(0, "tool.upgrade_tool.lv")
-        .setToolStats(new UpgradeToolLV()).setFullRepairCost(4).addComponents(new UpgradeToolComponent(25))
-        .addComponents(ElectricStats.createElectricItem(100000L, 1L));
-    UKMetaItems.UPGRADE_TOOL_MV = (UpgradeToolMetaValueItem) this.addItem(1, "tool.upgrade_tool.mv")
-        .setToolStats(new UpgradeToolMV()).setFullRepairCost(4).addComponents(new UpgradeToolComponent(15))
-        .addComponents(ElectricStats.createElectricItem(400000L, 2L));
-    UKMetaItems.UPGRADE_TOOL_HV = (UpgradeToolMetaValueItem) this.addItem(2, "tool.upgrade_tool.hv")
-        .setToolStats(new UpgradeToolHV()).setFullRepairCost(4).addComponents(new UpgradeToolComponent(10))
-        .addComponents(ElectricStats.createElectricItem(1600000L, 3L));
-  }
-
-  @Override
-  protected UpgradeToolMetaValueItem constructMetaValueItem(short metaValue, String unlocalizedName) {
-    return new UpgradeToolMetaValueItem(metaValue, unlocalizedName);
+    UKMetaItems.UPGRADE_TOOL_LV = (ToolMetaItem<?>.MetaToolValueItem) this.addItem(0, "tool.upgrade_tool.lv")
+        .setToolStats(new UpgradeToolLV()).setFullRepairCost(4).addStats(new UpgradeToolComponent(25))
+        .addStats(ElectricStats.createElectricItem(100000L, 1L)).addStats(UpgradeToolDurabilityManager.INSTANCE)
+        .setModelAmount(2);
+    UKMetaItems.UPGRADE_TOOL_MV = (ToolMetaItem<?>.MetaToolValueItem) this.addItem(1, "tool.upgrade_tool.mv")
+        .setToolStats(new UpgradeToolMV()).setFullRepairCost(4).addStats(new UpgradeToolComponent(15))
+        .addStats(ElectricStats.createElectricItem(400000L, 2L)).addStats(UpgradeToolDurabilityManager.INSTANCE)
+        .setModelAmount(2);
+    UKMetaItems.UPGRADE_TOOL_HV = (ToolMetaItem<?>.MetaToolValueItem) this.addItem(2, "tool.upgrade_tool.hv")
+        .setToolStats(new UpgradeToolHV()).setFullRepairCost(4).addStats(new UpgradeToolComponent(10))
+        .addStats(ElectricStats.createElectricItem(1600000L, 3L)).addStats(UpgradeToolDurabilityManager.INSTANCE)
+        .setModelAmount(2);
+    ;
   }
 
   @Override
@@ -45,28 +44,12 @@ public class UpgradeToolMetaItem extends ToolMetaItem<UpgradeToolMetaValueItem> 
 
   @Override
   public int getRGBDurabilityForDisplay(ItemStack stack) {
-    UpgradeToolMetaValueItem item = this.getItem(stack);
+    ToolMetaItem<?>.MetaToolValueItem item = this.getItem(stack);
     IItemDurabilityManager manager;
 
     if (item != null && (manager = item.getDurabilityManager()) != null)
       return manager.getRGBDurabilityForDisplay(stack);
     return super.getRGBDurabilityForDisplay(stack);
-  }
-
-  public class UpgradeToolMetaValueItem extends ToolMetaItem<?>.MetaToolValueItem {
-    protected UpgradeToolMetaValueItem(int metaValue, String unlocalizedName) {
-      super(metaValue, unlocalizedName);
-    }
-
-    @Override
-    public int getModelAmount() {
-      return 2;
-    }
-
-    @Override
-    public IItemDurabilityManager getDurabilityManager() {
-      return UpgradeToolDurabilityManager.INSTANCE;
-    }
   }
 
   public static class UpgradeToolDurabilityManager implements IItemDurabilityManager {

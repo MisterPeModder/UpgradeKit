@@ -2,16 +2,15 @@ package com.misterpemodder.upgradekit.impl.item;
 
 import java.util.List;
 
-import com.misterpemodder.upgradekit.impl.item.UpgradeToolMetaItem.UpgradeToolMetaValueItem;
-
 import gregtech.api.items.metaitem.MetaItem;
+import gregtech.api.items.toolitem.ToolMetaItem;
 
 public class UKMetaItems {
   public static List<MetaItem<?>> ITEMS = MetaItem.getMetaItems();
 
-  public static UpgradeToolMetaValueItem UPGRADE_TOOL_LV;
-  public static UpgradeToolMetaValueItem UPGRADE_TOOL_MV;
-  public static UpgradeToolMetaValueItem UPGRADE_TOOL_HV;
+  public static ToolMetaItem<?>.MetaToolValueItem UPGRADE_TOOL_LV;
+  public static ToolMetaItem<?>.MetaToolValueItem UPGRADE_TOOL_MV;
+  public static ToolMetaItem<?>.MetaToolValueItem UPGRADE_TOOL_HV;
 
   public static void init() {
     UKMetaItem item = new UKMetaItem();
